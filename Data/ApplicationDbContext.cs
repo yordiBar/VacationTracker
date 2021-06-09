@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using VacationTracker.Models;
 
 namespace VacationTracker.Data
 {
@@ -12,5 +13,7 @@ namespace VacationTracker.Data
             : base(options)
         {
         }
+
+        public DbSet<Employee> Employees { get; set; }
     }
 }
