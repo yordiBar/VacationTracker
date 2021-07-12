@@ -15,5 +15,10 @@ namespace VacationTracker.Data
         }
 
         public DbSet<Employee> Employees { get; set; }
+        public DbSet<Department> Departments { get; set; }
+        public DbSet<Location> Locations { get; set; }
+        public DbSet<Gender> Genders { get; set; }
+        public DbSet<Allowance> Allowances { get; set; }
+        public DbSet<Company> Companies { get; set; }
     }
 }
