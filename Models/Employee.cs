@@ -11,8 +11,8 @@ namespace VacationTracker.Models
     {
         [Key]
         public int Id { get; set; }
-        public int Firstname { get; set; }
-        public int Surname { get; set; }
+        public string Firstname { get; set; }
+        public string Surname { get; set; }
         public string DisplayName { get; set; }
         public string Email { get; set; }
         public string EmployeeNumber { get; set; }

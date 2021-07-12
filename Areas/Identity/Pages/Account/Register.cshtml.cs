@@ -89,21 +89,30 @@ namespace VacationTracker.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
-                Company company = new Company();
-                company.Address = Input.Address;
-                company.CompanyName = Input.CompanyName;
-                company.ContactEmail = Input.Email;
-                company.PhoneNumber = Input.PhoneNumber;
-                company.ContactName = Input.ContactName;
+                Company company = new()
+                {
+                    Address = Input.Address,
+                    CompanyName = Input.CompanyName,
+                    ContactEmail = Input.Email,
+                    PhoneNumber = Input.PhoneNumber,
+                    ContactName = Input.ContactName
+                };
 
                 var c = _db.Companies.Add(company);
                 await _db.SaveChangesAsync();
 
-                Employee employee = new Employee();
-                employee.DisplayName = Input.ContactName;
-                employee.Email = Input.Email;
-                employee.IsDeleted = false;
-                employee.CompanyId = company.Id;
+                Employee employee = new()
+                {
+                    DisplayName = Input.ContactName,
+                    Email = Input.Email,
+                    IsDeleted = false,
+                    CompanyId = company.Id,
+                    StartDate = DateTime.Now,
+                    IsAdmin = true,
+                    Firstname = "admin",
+                    Surname = "admin",
+                    JobTitle = "admin"
+                };
 
                 var e = _db.Employees.Add(employee);
                 await _db.SaveChangesAsync();
