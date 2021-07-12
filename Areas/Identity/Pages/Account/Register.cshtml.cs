@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Models;
 
 namespace VacationTracker.Areas.Identity.Pages.Account
@@ -20,18 +21,18 @@ namespace VacationTracker.Areas.Identity.Pages.Account
     [AllowAnonymous]
     public class RegisterModel : PageModel
     {
-        private readonly SignInManager<IdentityUser> _signInManager;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
-        private readonly Data.ApplicationDbContext _db;
+        private readonly VacationTracker.Data.ApplicationDbContext _db;
 
         public RegisterModel(
-            UserManager<IdentityUser> userManager,
-            SignInManager<IdentityUser> signInManager,
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
-            Data.ApplicationDbContext db)
+            VacationTracker.Data.ApplicationDbContext db)
             
         {
             _userManager = userManager;
@@ -117,7 +118,7 @@ namespace VacationTracker.Areas.Identity.Pages.Account
                 var e = _db.Employees.Add(employee);
                 await _db.SaveChangesAsync();
 
-                var user = new IdentityUser { UserName = Input.Email, Email = Input.Email };
+                var user = new ApplicationUser { UserName = Input.Email, Email = Input.Email };
                 var result = await _userManager.CreateAsync(user, Input.Password);
                 if (result.Succeeded)
                 {
