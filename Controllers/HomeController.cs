@@ -11,14 +11,7 @@ namespace VacationTracker.Controllers
 {
     public class HomeController : Controller
     {
-        //private readonly ILogger<HomeController> _logger;
         private readonly Data.ApplicationDbContext _db;
-
-        //public HomeController(ILogger<HomeController> logger)
-        //{
-        //    _logger = logger;
-        //}
-
         public HomeController(Data.ApplicationDbContext db)
         {
             _db = db;
