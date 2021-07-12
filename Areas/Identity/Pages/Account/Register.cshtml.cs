@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using VacationTracker.Models;
 
 namespace VacationTracker.Areas.Identity.Pages.Account
 {
@@ -23,17 +24,21 @@ namespace VacationTracker.Areas.Identity.Pages.Account
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly Data.ApplicationDbContext _db;
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            Data.ApplicationDbContext db)
+            
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _db = db;
         }
 
         [BindProperty]
@@ -45,6 +50,16 @@ namespace VacationTracker.Areas.Identity.Pages.Account
 
         public class InputModel
         {
+            [Required]
+            [Display(Name = "Company Name")]
+            public string CompanyName { get; set; }
+            public string Address { get; set; }
+            [Required]
+            [Display(Name = "Phone No.")]
+            public string PhoneNumber { get; set; }
+            [Required]
+            public string ContactName { get; set; }
+
             [Required]
             [EmailAddress]
             [Display(Name = "Email")]
@@ -74,6 +89,25 @@ namespace VacationTracker.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
+                Company company = new Company();
+                company.Address = Input.Address;
+                company.CompanyName = Input.CompanyName;
+                company.ContactEmail = Input.Email;
+                company.PhoneNumber = Input.PhoneNumber;
+                company.ContactName = Input.ContactName;
+
+                var c = _db.Companies.Add(company);
+                await _db.SaveChangesAsync();
+
+                Employee employee = new Employee();
+                employee.DisplayName = Input.ContactName;
+                employee.Email = Input.Email;
+                employee.IsDeleted = false;
+                employee.CompanyId = company.Id;
+
+                var e = _db.Employees.Add(employee);
+                await _db.SaveChangesAsync();
+
                 var user = new IdentityUser { UserName = Input.Email, Email = Input.Email };
                 var result = await _userManager.CreateAsync(user, Input.Password);
                 if (result.Succeeded)

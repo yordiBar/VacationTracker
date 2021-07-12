@@ -18,6 +18,7 @@ namespace VacationTracker.Models
         public string EmployeeNumber { get; set; }
         public string JobTitle { get; set; }
         public bool IsDeleted { get; set; }
+        public int CompanyId { get; set; }
 
 
         // Display DateTime as date only using DisplayFormat attribute
