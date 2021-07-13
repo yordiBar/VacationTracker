@@ -1,0 +1,53 @@
+﻿@model IEnumerable<VacationTracker.Models.Employee>
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>My Employees</h1>
+
+<p>
+    <a asp-action="Create">Add an employee</a>
+</p>
+@if (Model.Count() > 0)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    Display Name
+                </th>
+                <th>
+                    Start Date
+                </th>
+                <th>
+                    Position
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var employee in Model)
+            {
+                <tr>
+                    <td>
+                        @employee.DisplayName
+                    </td>
+                    <td>
+                        @employee.DisplayStartDate
+                    </td>
+                    <td>
+                        @employee.JobTitle
+                    </td>
+                    <td>
+                        <a asp-controller="Post" asp-action="Edit" asp-route-id="@employee.Id" class="btn btn-dark">Edit</a> |
+                        <a asp-controller="Post" asp-action="Delete" asp-route-id="@employee.Id" class="btn btn-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No employees to display. Please add a new employee!</p>
+}
