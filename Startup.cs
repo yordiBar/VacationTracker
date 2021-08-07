@@ -105,7 +105,7 @@ namespace VacationTracker
             }
         }
 
-        private async Task CreateRoles(IServiceProvider serviceProvider)
+        private static async Task CreateRoles(IServiceProvider serviceProvider)
         {
             // create RoleManager and UserManager Interfaces
             var RoleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();

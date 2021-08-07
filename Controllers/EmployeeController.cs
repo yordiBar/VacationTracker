@@ -136,6 +136,121 @@ namespace VacationTracker.Controllers
 
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            Employee employee = await _db.Employees.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+
+            ApplicationUser newuser = await _userManager.FindByEmailAsync(employee.Email);
+            employee.IsAdmin = await _userManager.IsInRoleAsync(newuser, "Admin");
+            employee.IsApprover = await _userManager.IsInRoleAsync(newuser, "Approver");
+            employee.IsManager = await _userManager.IsInRoleAsync(newuser, "Manager");
+
+            if (employee == null)
+            {
+                return NotFound();
+            }
+            return View(employee);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Employee employee)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return View(employee);
+            }
+
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            employee.CompanyId = currentUsersCompanyId;
+
+            _db.Attach(employee).State = EntityState.Modified;
+
+            try
+            {
+                await _db.SaveChangesAsync();
+
+                ApplicationUser user = await _userManager.FindByEmailAsync(employee.Email);
+
+                if (employee.IsAdmin)
+                {
+                    if (!await _userManager.IsInRoleAsync(user, "Admin"))
+                    {
+                        await _userManager.AddToRoleAsync(user, "Admin");
+                    }
+
+                }
+                else
+                {
+                    if (await _userManager.IsInRoleAsync(user, "Admin"))
+                    {
+                        await _userManager.RemoveFromRoleAsync(user, "Admin");
+                    }
+                }
+
+                if (employee.IsApprover)
+                {
+                    if (!await _userManager.IsInRoleAsync(user, "Approver"))
+                    {
+                        await _userManager.AddToRoleAsync(user, "Approver");
+                    }
+
+                }
+                else
+                {
+                    if (await _userManager.IsInRoleAsync(user, "Approver"))
+                    {
+                        await _userManager.RemoveFromRoleAsync(user, "Approver");
+                    }
+                }
+
+                if (employee.IsManager)
+                {
+                    if (!await _userManager.IsInRoleAsync(user, "Manager"))
+                    {
+                        await _userManager.AddToRoleAsync(user, "Manager");
+                    }
+
+                }
+                else
+                {
+                    if (await _userManager.IsInRoleAsync(user, "Manager"))
+                    {
+                        await _userManager.RemoveFromRoleAsync(user, "Manager");
+                    }
+                }
+
+                if (!await _userManager.IsInRoleAsync(user, "Employee"))
+                {
+                    await _userManager.AddToRoleAsync(user, "Employee");
+                }
+                // check if there is an allowance for the current year for the employee if not create
+                await CreateAllowanceIfRequired(employee, currentUsersCompanyId);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!EmployeeExists(employee.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return RedirectToAction("Index");
+        }
+
         // A boolean method to check if any employees exist
         private bool EmployeeExists(int id)
         {
