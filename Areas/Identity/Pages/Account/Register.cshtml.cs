@@ -118,7 +118,7 @@ namespace VacationTracker.Areas.Identity.Pages.Account
                 var e = _db.Employees.Add(employee);
                 await _db.SaveChangesAsync();
 
-                var user = new ApplicationUser { UserName = Input.Email, Email = Input.Email };
+                var user = new ApplicationUser { UserName = Input.Email, Email = Input.Email, CompanyId = company.Id };
                 var result = await _userManager.CreateAsync(user, Input.Password);
                 if (result.Succeeded)
                 {
