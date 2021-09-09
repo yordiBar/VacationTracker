@@ -31,7 +31,7 @@ namespace VacationTracker.Controllers
         public IActionResult Index()
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            IEnumerable<Employee> employeeList = _db.Employees.Where(x => x.CompanyId == currentUsersCompanyId);
+            IEnumerable<Employee> employeeList = _db.Employees.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
             return View(employeeList);
         }
 
@@ -44,7 +44,7 @@ namespace VacationTracker.Controllers
 
         // POST
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Employee employee)
         {
             if (!ModelState.IsValid)
@@ -160,7 +160,7 @@ namespace VacationTracker.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Employee employee)
         {
 
@@ -294,6 +294,56 @@ namespace VacationTracker.Controllers
 
                 await _db.SaveChangesAsync();
             };
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            Employee emp = await _db.Employees.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
+
+            if (emp == null)
+            {
+                return NotFound();
+            }
+            return View(emp);
+        }
+
+        [HttpPost]
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(Employee emp)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(emp);
+            }
+
+            emp.IsDeleted = true;
+
+            _db.Attach(emp).State = EntityState.Modified;
+
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!EmployeeExists(emp.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return RedirectToAction("Index");
         }
     }
 }

@@ -124,6 +124,14 @@ namespace VacationTracker.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User created a new account with password.");
 
+                    //add user to all roles
+                    ApplicationUser newuser = await _userManager.FindByEmailAsync(Input.Email);
+
+                    await _userManager.AddToRoleAsync(newuser, "Admin");
+                    await _userManager.AddToRoleAsync(newuser, "Manager");
+                    await _userManager.AddToRoleAsync(newuser, "Approver");
+                    await _userManager.AddToRoleAsync(newuser, "Employee");
+
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
                     var callbackUrl = Url.Page(
