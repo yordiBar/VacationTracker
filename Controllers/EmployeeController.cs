@@ -44,7 +44,7 @@ namespace VacationTracker.Controllers
 
         // POST
         [HttpPost]
-        //[ValidateAntiForgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Employee employee)
         {
             if (!ModelState.IsValid)
@@ -160,7 +160,7 @@ namespace VacationTracker.Controllers
         }
 
         [HttpPost]
-        //[ValidateAntiForgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Employee employee)
         {
 
@@ -316,7 +316,7 @@ namespace VacationTracker.Controllers
         }
 
         [HttpPost]
-        //[ValidateAntiForgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Employee emp)
         {
             if (!ModelState.IsValid)
