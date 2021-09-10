@@ -57,6 +57,11 @@
                 <input type="text" name="DepartmentId" id="selectDept" style="width:100%" />
                 <span class="text-danger"></span>
             </div>
+            <div class="form-group">
+                <label class="control-label">Location Name</label>
+                <input type="text" name="LocationId" id="selectLoc" style="width:100%" />
+                <span class="text-danger"></span>
+            </div>
             <hr />
             <h4>Roles</h4>
             <div class="form-group form-check">
@@ -156,6 +161,60 @@
                     });
                 }
             });
+
+            $("#selectLoc").select2({
+                placeholder: "Select Location",
+                allowClear: true,
+                ajax: {
+                    cache: false,
+                    dataType: "json",
+                    type: "GET",
+                    url: "@Url.Action("GetLocationName", "Employee")",
+                    data: function (searchTerm) {
+                        return { query: searchTerm };
+                    },
+                    results: function (data) {
+                        return { results: data };
+                    },
+                },
+                initSelection: function (element, callback) {
+                    $.ajax({
+                        type: "GET",
+                        url:"/Employee/GetLocationById?Id=" + element.val(),
+                        success: function (data) {
+                            var obj = { id: data.id, text: data.text };
+                            callback(obj);
+                        }
+                    });
+                }
+            });
+
+            $("#selectGen").select2({
+                placeholder: "Select Gender",
+                allowClear: true,
+                ajax: {
+                    cache: false,
+                    dataType: "json",
+                    type: "GET",
+                    url: "@Url.Action("GetGenderName", "Employee")",
+                    data: function (searchTerm) {
+                        return { query: searchTerm };
+                    },
+                    results: function (data) {
+                        return { results: data };
+                    },
+                },
+                initSelection: function (element, callback) {
+                    $.ajax({
+                        type: "GET",
+                        url:"/Employee/GetGenderById?Id=" + element.val(),
+                        success: function (data) {
+                            var obj = { id: data.id, text: data.text };
+                            callback(obj);
+                        }
+                    });
+                }
+             });
         });
     </script>
 

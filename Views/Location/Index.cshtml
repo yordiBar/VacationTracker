@@ -1,19 +1,19 @@
-﻿@model IEnumerable<VacationTracker.Models.Department>
+﻿@model IEnumerable<VacationTracker.Models.Location>
 
 @{
-    ViewData["Title"] = "Departments";
+    ViewData["Title"] = "My Locations";
 }
 
-<h1>Departments</h1>
+<h1>My Locations</h1>
 
 <p>
-    <a asp-action="Create">Create New</a>
+    <a asp-action="Create">Add a Location</a>
 </p>
 <table class="table">
     <thead>
         <tr>
             <th>
-                Department Name
+                Location Name
             </th>
             <th>
                 Actions
@@ -24,7 +24,7 @@
 @foreach (var item in Model) {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.DepartmentName)
+                @Html.DisplayFor(modelItem => item.LocationName)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |

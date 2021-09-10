@@ -1,11 +1,10 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Data;
@@ -13,13 +12,14 @@ using VacationTracker.Models;
 
 namespace VacationTracker.Controllers
 {
-    public class DepartmentController : Controller
+    public class LocationController : Controller
     {
+
         private readonly ApplicationDbContext _db;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public DepartmentController(ApplicationDbContext db,
+        public LocationController(ApplicationDbContext db,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager)
         {
@@ -28,15 +28,15 @@ namespace VacationTracker.Controllers
             _signInManager = signInManager;
         }
 
-        // GET: Department/Details
+        
         public IActionResult Index()
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            IEnumerable<Department> departmentList = _db.Departments.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
-            return View(departmentList);
+            IEnumerable<Location> locationList = _db.Locations.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            return View(locationList);
         }
 
-        // POST: Department/Details
+        // GET: Location/Details
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -44,38 +44,45 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            var department = await _db.Departments
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (department == null)
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            Location location = await _db.Locations.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+
+            if (location == null)
             {
                 return NotFound();
             }
-
-            return View(department);
+            return View(location);
         }
 
-        // GET: Department/Create
+        // A boolean method to check if any locations exist
+        private bool LocationExists(int id)
+        {
+            return _db.Locations.Any(l => l.Id == id);
+        }
+
+        // GET: Location/Create
         [HttpGet]
         public IActionResult Create()
         {
-            return View(new Department());
+            return View(new Location());
         }
 
-
-        // HTTPPost method to Create a department from Create view
+        // HttpPost method to create locations
         [HttpPost]
-        public async Task<IActionResult> Create(Department dept)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Location loc)
         {
             if (!ModelState.IsValid)
             {
-                return View(dept);
+                return View(loc);
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            dept.CompanyId = currentUsersCompanyId;
+            loc.CompanyId = currentUsersCompanyId;
 
-            _db.Departments.Add(dept);
+            _db.Locations.Add(loc);
 
             try
             {
@@ -83,7 +90,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!DepartmentExists(dept.Id))
+                if (!LocationExists(loc.Id))
                 {
                     return NotFound();
                 }
@@ -92,11 +99,10 @@ namespace VacationTracker.Controllers
                     throw;
                 }
             }
-
             return RedirectToAction("Index");
         }
 
-        // GET: Department/Edit
+        [HttpGet]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -105,25 +111,27 @@ namespace VacationTracker.Controllers
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            var department = await _db.Departments.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
-            if (department == null)
+
+            Location location = await _db.Locations.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
+
+            if (location == null)
             {
                 return NotFound();
             }
-            return View(department);
+            return View(location);
         }
 
-        // POST: Department/Edit
+        // HttpPost method to edit locations
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Department department)
+        public async Task<IActionResult> Edit(Location loc)
         {
             if (!ModelState.IsValid)
             {
-                return View(department);
+                return View(loc);
             }
 
-            _db.Attach(department).State = EntityState.Modified;
+            _db.Attach(loc).State = EntityState.Modified;
 
             try
             {
@@ -131,7 +139,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!DepartmentExists(department.Id))
+                if (!LocationExists(loc.Id))
                 {
                     return NotFound();
                 }
@@ -140,11 +148,10 @@ namespace VacationTracker.Controllers
                     throw;
                 }
             }
-
             return RedirectToAction("Index");
         }
 
-        // GET: Department/Delete
+        [HttpGet]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -153,29 +160,45 @@ namespace VacationTracker.Controllers
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            var department = await _db.Departments.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
-            if (department == null)
+
+            Location location = await _db.Locations.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
+
+            if (location == null)
             {
                 return NotFound();
             }
-
-            return View(department);
+            return View(location);
         }
 
-        // POST: Department/Delete
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        // HttpPost method to delete locations
+        [HttpPost]
+        public async Task<IActionResult> Delete(Location loc)
         {
-            var department = await _db.Departments.FindAsync(id);
-            _db.Departments.Remove(department);
-            await _db.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
+            if (!ModelState.IsValid)
+            {
+                return View(loc);
+            }
 
-        private bool DepartmentExists(int id)
-        {
-            return _db.Departments.Any(e => e.Id == id);
+            loc.IsDeleted = true;
+
+            _db.Attach(loc).State = EntityState.Modified;
+
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!LocationExists(loc.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return RedirectToAction("Index");
         }
     }
 }

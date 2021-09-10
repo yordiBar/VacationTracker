@@ -53,7 +53,7 @@ namespace VacationTracker.Controllers
             }
             int currentUsersCompanyId = User.Identity.GetCompanyId();
             employee.CompanyId = currentUsersCompanyId;
-            _db.Employees.Add(employee);           
+            _db.Employees.Add(employee);
 
             try
             {
@@ -355,9 +355,9 @@ namespace VacationTracker.Controllers
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Department dept = _db.Departments.Where(x=> x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+            Department dept = _db.Departments.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
 
-            if(dept != null)
+            if (dept != null)
             {
                 var serialisedJson = new
                 {
@@ -367,7 +367,7 @@ namespace VacationTracker.Controllers
                 return Json(serialisedJson);
             }
             else
-            { 
+            {
                 var serialisedJson = new
                 {
                     text = "",
@@ -405,5 +405,115 @@ namespace VacationTracker.Controllers
             return Json(serialisedJson);
         }
 
+        [HttpGet]
+        public IActionResult GetLocationById(int Id)
+        {
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            Location location = _db.Locations.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+
+            if (location != null)
+            {
+                var serialisedJson = new
+                {
+                    text = location.LocationName,
+                    id = location.Id
+                };
+                return Json(serialisedJson);
+            }
+            else
+            {
+                var serialisedJson = new
+                {
+                    text = "",
+                    id = 0
+                };
+                return Json(serialisedJson);
+            }
+
+        }
+
+        [HttpGet]
+        public IActionResult GetLocationName(string name)
+        {
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            List<Location> locationNameList = _db.Locations.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false).ToList();
+
+            List<Location> locationNameResults = new();
+
+            foreach (var locName in locationNameList)
+            {
+                if (String.IsNullOrEmpty(name) || locName.LocationName.Contains(name, StringComparison.OrdinalIgnoreCase))
+                {
+                    locationNameResults.Add(locName);
+                }
+            }
+
+            locationNameResults.Sort(delegate (Location l1, Location l2) { return l1.LocationName.CompareTo(l2.LocationName); });
+
+            var serialisedJson = from result in locationNameResults
+                                 select new
+                                 {
+                                     text = result.LocationName,
+                                     id = result.Id
+                                 };
+            return Json(serialisedJson);
+        }
+
+        [HttpGet]
+        public IActionResult GetGenderById(int Id)
+        {
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            Gender gender = _db.Genders.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+
+            if (gender != null)
+            {
+                var serialisedJson = new
+                {
+                    text = gender.Name,
+                    id = gender.Id
+                };
+                return Json(serialisedJson);
+            }
+            else
+            {
+                var serialisedJson = new
+                {
+                    text = "",
+                    id = 0
+                };
+                return Json(serialisedJson);
+            }
+        }
+
+        [HttpGet]
+        public IActionResult GetGenderName(string name)
+        {
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            List<Gender> genderNameList = _db.Genders.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false).ToList();
+
+            List<Gender> genderNameResults = new();
+
+            foreach (var genName in genderNameList)
+            {
+                if (String.IsNullOrEmpty(name) || genName.Name.Contains(name, StringComparison.OrdinalIgnoreCase))
+                {
+                    genderNameResults.Add(genName);
+                }
+            }
+
+            genderNameResults.Sort(delegate (Gender g1, Gender g2) { return g1.Name.CompareTo(g2.Name); });
+
+            var serialisedJson = from result in genderNameResults
+                                 select new
+                                 {
+                                     text = result.Name,
+                                     id = result.Id
+                                 };
+            return Json(serialisedJson);
+        }
     }
 }
