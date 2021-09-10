@@ -345,5 +345,65 @@ namespace VacationTracker.Controllers
             }
             return RedirectToAction("Index");
         }
+
+        //********************************************************************************************************************
+        //***************************************************HELPER METHODS***************************************************
+        //********************************************************************************************************************
+
+        [HttpGet]
+        public IActionResult GetDepartmentById(int Id)
+        {
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            Department dept = _db.Departments.Where(x=> x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+
+            if(dept != null)
+            {
+                var serialisedJson = new
+                {
+                    text = dept.DepartmentName,
+                    id = dept.Id
+                };
+                return Json(serialisedJson);
+            }
+            else
+            { 
+                var serialisedJson = new
+                {
+                    text = "",
+                    id = 0
+                };
+                return Json(serialisedJson);
+            }
+        }
+
+        [HttpGet]
+        public IActionResult GetDepartmentName(string name)
+        {
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            List<Department> departmentNameList = _db.Departments.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false).ToList();
+
+            List<Department> departmentNameResults = new();
+
+            foreach (var deptName in departmentNameList)
+            {
+                if (String.IsNullOrEmpty(name) || deptName.DepartmentName.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    departmentNameResults.Add(deptName);
+                }
+            }
+
+            departmentNameResults.Sort(delegate (Department d1, Department d2) { return d1.DepartmentName.CompareTo(d2.DepartmentName); });
+
+            var serialisedJson = from result in departmentNameResults
+                                 select new
+                                 {
+                                     text = result.DepartmentName,
+                                     id = result.Id
+                                 };
+            return Json(serialisedJson);
+        }
+
     }
 }

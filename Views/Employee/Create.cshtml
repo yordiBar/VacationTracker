@@ -52,6 +52,11 @@
                 <input asp-for="StartDate" class="form-control" />
                 <span asp-validation-for="StartDate" class="text-danger"></span>
             </div>
+            <div class="form-group">
+                <label class="control-label">Department Name</label>
+                <input type="text" name="DepartmentId" id="selectDept" style="width:100%" />
+                <span class="text-danger"></span>
+            </div>
             <div class="form-group form-check">
                 <label class="form-check-label">
                     <input class="form-check-input" asp-for="IsApprover" /> @Html.DisplayNameFor(model => model.IsApprover)
@@ -115,4 +120,39 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@3.5.2-browserify/select2.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@3.5.2-browserify/select2.min.js"></script>
+    <script>
+        $(function () {
+            $("#selectDept").select2({
+                placeholder: "Select Department",
+                allowClear: true,
+                ajax: {
+                    cache: false,
+                    dataType: "json",
+                    type: "GET",
+                    url: "@Url.Action("GetDepartmentName", "Employee")",
+                    data: function (searchTerm) {
+                        return { query: searchTerm };
+                    },
+                    results: function (data) {
+                        return { results: data };
+                    },
+                },
+                initSelection: function (element, callback) {
+                    $.ajax({
+                        type: "GET",
+                        url:"/Employee/GetDepartmentById?Id=" + element.val(),
+                        success: function (data) {
+                            var obj = { id: data.id, text: data.text };
+                            callback(obj);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+
 }
