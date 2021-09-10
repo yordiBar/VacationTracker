@@ -28,7 +28,7 @@ namespace VacationTracker.Controllers
             _signInManager = signInManager;
         }
 
-        // GET: Department
+        // GET: Department/Details
         public IActionResult Index()
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
@@ -36,7 +36,7 @@ namespace VacationTracker.Controllers
             return View(departmentList);
         }
 
-        // GET: Department/Details/5
+        // POST: Department/Details
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -61,8 +61,6 @@ namespace VacationTracker.Controllers
         }
 
         // POST: Department/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,DepartmentName,CompanyId,DepartmentCode,IsDeleted")] Department department)
@@ -76,7 +74,7 @@ namespace VacationTracker.Controllers
             return View(department);
         }
 
-        // GET: Department/Edit/5
+        // GET: Department/Edit
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -84,7 +82,8 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            var department = await _db.Departments.FindAsync(id);
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            var department = await _db.Departments.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
             if (department == null)
             {
                 return NotFound();
@@ -92,42 +91,38 @@ namespace VacationTracker.Controllers
             return View(department);
         }
 
-        // POST: Department/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Department/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,DepartmentName,CompanyId,DepartmentCode,IsDeleted")] Department department)
+        public async Task<IActionResult> Edit(Department department)
         {
-            if (id != department.Id)
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                return View(department);
             }
 
-            if (ModelState.IsValid)
+            _db.Attach(department).State = EntityState.Modified;
+
+            try
             {
-                try
-                {
-                    _db.Update(department);
-                    await _db.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!DepartmentExists(department.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _db.SaveChangesAsync();
             }
-            return View(department);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!DepartmentExists(department.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return RedirectToAction("Index");
         }
 
-        // GET: Department/Delete/5
+        // GET: Department/Delete
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -135,8 +130,8 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            var department = await _db.Departments
-                .FirstOrDefaultAsync(m => m.Id == id);
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            var department = await _db.Departments.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
             if (department == null)
             {
                 return NotFound();
@@ -145,7 +140,7 @@ namespace VacationTracker.Controllers
             return View(department);
         }
 
-        // POST: Department/Delete/5
+        // POST: Department/Delete
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
