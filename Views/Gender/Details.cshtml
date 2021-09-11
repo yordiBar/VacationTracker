@@ -1,26 +1,26 @@
-﻿@model VacationTracker.Models.Department
+﻿@model VacationTracker.Models.Gender
 
 @{
-    ViewData["Title"] = "Department Details";
+    ViewData["Title"] = "Details";
 }
 
-<h1>My Departments</h1>
+<h1>My Genders</h1>
 
 <div>
-    <h4>Departments Details</h4>
+    <h4>Gender Details</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DepartmentName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DepartmentName)
-        </dd>
         <dt class = "col-sm-2" style="display:none">
-            @Html.DisplayNameFor(model => model.DepartmentCode)
+            @Html.DisplayNameFor(model => model.CompanyId)
         </dt>
         <dd class = "col-sm-10" style="display:none">
-            @Html.DisplayFor(model => model.DepartmentCode)
+            @Html.DisplayFor(model => model.CompanyId)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Name)
         </dd>
         <dt class = "col-sm-2" style="display:none">
             @Html.DisplayNameFor(model => model.IsDeleted)

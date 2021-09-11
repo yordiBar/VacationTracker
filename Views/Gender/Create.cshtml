@@ -1,12 +1,12 @@
-﻿@model VacationTracker.Models.Location
+﻿@model VacationTracker.Models.Gender
 
 @{
     ViewData["Title"] = "Create";
 }
 
-<h1>Add a Location</h1>
+<h1>Add a Gender</h1>
 
-<h4>Location Details</h4>
+<h4>Gender Details</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
@@ -18,14 +18,9 @@
                 <span asp-validation-for="CompanyId" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="LocationCode" class="control-label">Location Code</label>
-                <input asp-for="LocationCode" class="form-control" />
-                <span asp-validation-for="LocationCode" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="LocationName" class="control-label">Location Name</label>
-                <input asp-for="LocationName" class="form-control" />
-                <span asp-validation-for="LocationName" class="text-danger"></span>
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
             </div>
             <div class="form-group form-check" style="display:none">
                 <label class="form-check-label">
