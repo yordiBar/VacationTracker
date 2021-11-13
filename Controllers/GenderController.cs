@@ -168,6 +168,7 @@ namespace VacationTracker.Controllers
 
         // HttpPost method to delete genders
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Gender gender)
         {
             if (!ModelState.IsValid)

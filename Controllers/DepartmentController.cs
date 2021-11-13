@@ -64,6 +64,7 @@ namespace VacationTracker.Controllers
 
         // HTTPPost method to Create a department from Create view
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Department dept)
         {
             if (!ModelState.IsValid)

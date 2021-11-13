@@ -1,0 +1,49 @@
+﻿@model IEnumerable<VacationTracker.Models.RequestType>
+
+@{
+    ViewData["Title"] = "Request Types";
+}
+
+<h1>Request Types</h1>
+
+<p>
+    <a asp-action="Create">Create a New Request Type</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Request Type
+            </th>
+            <th>
+                Description
+            </th>
+            <th>
+                Takes from allowance
+            </th>
+            <th>
+                Actions
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.RequestTypeName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Description)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TakesFromAllowance)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

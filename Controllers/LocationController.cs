@@ -172,6 +172,7 @@ namespace VacationTracker.Controllers
 
         // HttpPost method to delete locations
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Location loc)
         {
             if (!ModelState.IsValid)
