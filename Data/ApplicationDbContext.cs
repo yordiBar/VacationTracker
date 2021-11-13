@@ -21,5 +21,7 @@ namespace VacationTracker.Data
         public DbSet<Gender> Genders { get; set; }
         public DbSet<Allowance> Allowances { get; set; }
         public DbSet<Company> Companies { get; set; }
+        public DbSet<Request> Requests { get; set; }
+        public DbSet<RequestType> RequestTypes { get; set; }
     }
 }
