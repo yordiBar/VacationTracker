@@ -122,7 +122,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!EmployeeExists(employee.Id))
+                if (!CheckIfEmployeeExists(employee.Id))
                 {
                     return NotFound();
                 }
@@ -238,7 +238,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!EmployeeExists(employee.Id))
+                if (!CheckIfEmployeeExists(employee.Id))
                 {
                     return NotFound();
                 }
@@ -252,7 +252,7 @@ namespace VacationTracker.Controllers
         }
 
         // A boolean method to check if any employees exist
-        private bool EmployeeExists(int id)
+        private bool CheckIfEmployeeExists(int id)
         {
             return _db.Employees.Any(e => e.Id == id);
         }
@@ -334,7 +334,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!EmployeeExists(emp.Id))
+                if (!CheckIfEmployeeExists(emp.Id))
                 {
                     return NotFound();
                 }

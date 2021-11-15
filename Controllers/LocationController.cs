@@ -56,7 +56,7 @@ namespace VacationTracker.Controllers
         }
 
         // A boolean method to check if any locations exist
-        private bool LocationExists(int id)
+        private bool CheckIfLocationExists(int id)
         {
             return _db.Locations.Any(l => l.Id == id);
         }
@@ -90,7 +90,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!LocationExists(loc.Id))
+                if (!CheckIfLocationExists(loc.Id))
                 {
                     return NotFound();
                 }
@@ -139,7 +139,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!LocationExists(loc.Id))
+                if (!CheckIfLocationExists(loc.Id))
                 {
                     return NotFound();
                 }
@@ -190,7 +190,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!LocationExists(loc.Id))
+                if (!CheckIfLocationExists(loc.Id))
                 {
                     return NotFound();
                 }

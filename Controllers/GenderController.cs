@@ -30,7 +30,7 @@ namespace VacationTracker.Controllers
         public IActionResult Index()
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            IEnumerable<Gender> genderList = _db.Genders.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            IEnumerable<Gender> genderList = _db.Genders.Where(g => g.CompanyId == currentUsersCompanyId && g.IsDeleted == false);
             return View(genderList);
         }
 
@@ -43,7 +43,7 @@ namespace VacationTracker.Controllers
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Gender gender = await _db.Genders.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            Gender gender = await _db.Genders.FirstOrDefaultAsync(g => g.Id == id && g.CompanyId == currentUsersCompanyId && g.IsDeleted == false);
 
             if (gender == null)
             {
@@ -53,9 +53,9 @@ namespace VacationTracker.Controllers
         }
 
         // A boolean method to check if any genders exist
-        private bool GenderExists(int id)
+        private bool CheckIfGenderExists(int id)
         {
-            return _db.Genders.Any(l => l.Id == id);
+            return _db.Genders.Any(g => g.Id == id);
         }
 
         [HttpGet]
@@ -86,7 +86,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!GenderExists(gender.Id))
+                if (!CheckIfGenderExists(gender.Id))
                 {
                     return NotFound();
                 }
@@ -108,7 +108,7 @@ namespace VacationTracker.Controllers
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Gender gender = await _db.Genders.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
+            Gender gender = await _db.Genders.FirstOrDefaultAsync(g => g.Id == id && g.CompanyId == currentUsersCompanyId);
 
             if (gender == null)
             {
@@ -135,7 +135,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!GenderExists(gender.Id))
+                if (!CheckIfGenderExists(gender.Id))
                 {
                     return NotFound();
                 }
@@ -157,7 +157,7 @@ namespace VacationTracker.Controllers
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Gender gender = await _db.Genders.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
+            Gender gender = await _db.Genders.FirstOrDefaultAsync(g => g.Id == id && g.CompanyId == currentUsersCompanyId);
 
             if (gender == null)
             {
@@ -186,7 +186,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!GenderExists(gender.Id))
+                if (!CheckIfGenderExists(gender.Id))
                 {
                     return NotFound();
                 }

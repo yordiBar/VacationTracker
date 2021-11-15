@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Models;
@@ -24,7 +26,7 @@ namespace VacationTracker.Controllers
 
 
         // GET: RequestTypeController
-        public ActionResult Index()
+        public IActionResult Index()
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
             IEnumerable<RequestType> requestTypeList = _db.RequestTypes.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
@@ -32,72 +34,166 @@ namespace VacationTracker.Controllers
         }
 
         // GET: RequestTypeController/Details/5
-        public ActionResult Details(int id)
+        public async Task<IActionResult> Details(int? id)
         {
-            return View();
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            RequestType requestType = await _db.RequestTypes.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+
+            if (requestType == null)
+            {
+                return NotFound();
+            }
+            return View(requestType);
+        }
+
+        private bool CheckIfRequestTypeExists(int id)
+        {
+            return _db.RequestTypes.Any(rt => rt.Id == id);
         }
 
         // GET: RequestTypeController/Create
-        public ActionResult Create()
+        [HttpGet]
+        public IActionResult Create()
         {
-            return View();
+            return View(new RequestType());
         }
 
         // POST: RequestTypeController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public async Task<IActionResult> Create(RequestType requestType)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(requestType);
+            }
+
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            requestType.CompanyId = currentUsersCompanyId;
+            _db.RequestTypes.Add(requestType);
+
             try
             {
-                return RedirectToAction(nameof(Index));
+                await _db.SaveChangesAsync();
             }
-            catch
+            catch (DbUpdateConcurrencyException)
             {
-                return View();
+                if (!CheckIfRequestTypeExists(requestType.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
             }
+            return RedirectToAction("Index");
         }
 
         // GET: RequestTypeController/Edit/5
-        public ActionResult Edit(int id)
+        [HttpGet]
+        public async Task<IActionResult> Edit(int? id)
         {
-            return View();
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            RequestType requestType = await _db.RequestTypes.FirstOrDefaultAsync(rt => rt.Id == id && rt.CompanyId == currentUsersCompanyId);
+
+            if (requestType == null)
+            {
+                return NotFound();
+            }
+            return View(requestType);
         }
 
         // POST: RequestTypeController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<IActionResult> Edit(RequestType requestType)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(requestType);
+            }
+
+            _db.Attach(requestType).State = EntityState.Modified;
+
             try
             {
-                return RedirectToAction(nameof(Index));
+                await _db.SaveChangesAsync();
             }
-            catch
+            catch(DbUpdateConcurrencyException)
             {
-                return View();
+                if (!CheckIfRequestTypeExists(requestType.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
             }
+            return RedirectToAction("Index");
         }
 
         // GET: RequestTypeController/Delete/5
-        public ActionResult Delete(int id)
+        [HttpGet]
+        public async Task<IActionResult> Delete(int? id)
         {
-            return View();
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            RequestType requestType = await _db.RequestTypes.FirstOrDefaultAsync(rt => rt.Id == id && rt.CompanyId == currentUsersCompanyId);
+
+            if (requestType == null)
+            {
+                return NotFound();
+            }
+            return View(requestType);
         }
 
         // POST: RequestTypeController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public async Task<IActionResult> Delete(RequestType requestType)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(requestType);
+            }
+
+            requestType.IsDeleted = true;
+            _db.Attach(requestType).State = EntityState.Modified;
+
             try
             {
-                return RedirectToAction(nameof(Index));
+                await _db.SaveChangesAsync();
             }
-            catch
+            catch(DbUpdateConcurrencyException)
             {
-                return View();
+                if (!CheckIfRequestTypeExists(requestType.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
             }
+            return RedirectToAction("Index");
         }
     }
 }

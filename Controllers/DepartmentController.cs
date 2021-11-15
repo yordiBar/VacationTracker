@@ -84,7 +84,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!DepartmentExists(dept.Id))
+                if (!CheckIfDepartmentExists(dept.Id))
                 {
                     return NotFound();
                 }
@@ -132,7 +132,7 @@ namespace VacationTracker.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!DepartmentExists(department.Id))
+                if (!CheckIfDepartmentExists(department.Id))
                 {
                     return NotFound();
                 }
@@ -174,7 +174,7 @@ namespace VacationTracker.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private bool DepartmentExists(int id)
+        private bool CheckIfDepartmentExists(int id)
         {
             return _db.Departments.Any(e => e.Id == id);
         }
