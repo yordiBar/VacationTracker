@@ -39,24 +39,27 @@
                         {
                             if (User.IsInRole("Manager"))
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Employee" asp-action="Index">List of Employees</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Department" asp-action="Index">Departments</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Location" asp-action="Index">Locations</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Gender" asp-action="Index">Genders</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="RequestType" asp-action="Index">Request Types</a>
+                                <li class="nav-item nav-link text-dark">Company Settings
+                                    <ul>
+                                        <li>
+                                            <a class="nav-link text-dark" asp-area="" asp-controller="Employee" asp-action="Index">List of Employees</a>
+                                        </li>
+                                        <li>
+                                            <a class="nav-link text-dark" asp-area="" asp-controller="Department" asp-action="Index">Departments</a>
+                                        </li>
+                                        <li>
+                                            <a class="nav-link text-dark" asp-area="" asp-controller="Location" asp-action="Index">Locations</a>
+                                        </li>
+                                        <li>
+                                            <a class="nav-link text-dark" asp-area="" asp-controller="Gender" asp-action="Index">Genders</a>
+                                        </li>
+                                        <li>
+                                            <a class="nav-link text-dark" asp-area="" asp-controller="RequestType" asp-action="Index">Request Types</a>
+                                        </li>
+                                    </ul>                
                                 </li>
                             }
-                        }
-
+                        }                        
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
