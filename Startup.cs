@@ -1,21 +1,19 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using VacationTracker.Areas.Identity;
-using VacationTracker.Data;
 using VacationTracker.Areas.Identity.Data;
+using VacationTracker.Data;
 
 namespace VacationTracker
 {
@@ -41,6 +39,7 @@ namespace VacationTracker
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, MyUserClaimsPrincipalFactory>();
             services.AddControllersWithViews();
+            services.AddSingleton<IRoleSeed, RoleSeed>();
             services.Configure<IdentityOptions>(options =>
             {
                 options.Password.RequireDigit = true;
@@ -56,7 +55,8 @@ namespace VacationTracker
                 options.User.RequireUniqueEmail = true;
             });
             //added
-            services.ConfigureApplicationCookie(options => {
+            services.ConfigureApplicationCookie(options =>
+            {
                 options.Cookie.HttpOnly = true;
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(20.0);
                 options.LoginPath = "/Identity/Account/Login";
@@ -94,75 +94,44 @@ namespace VacationTracker
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
             });
+
             try
             {
-                CreateRoles(services).Wait();
+                var roleSeed = services.GetRequiredService<IRoleSeed>();
+                var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+                roleSeed.SeedAsync(roleManager);
             }
             catch (Exception e)
             {
-
-                throw;
+                var logger = services.GetRequiredService<ILogger<Startup>>();
+                logger.LogError(e, "An error occurred while seeding the roles.");
             }
         }
 
-        private static async Task CreateRoles(IServiceProvider serviceProvider)
+        public class MyUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<ApplicationUser, IdentityRole>
         {
-            // create RoleManager and UserManager Interfaces
-            var RoleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            var UserManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            private readonly UserManager<ApplicationUser> _userManager;
+            private readonly RoleManager<IdentityRole> _roleManager;
 
-            IdentityResult roleResult;
-
-            //here in this line we are adding SystemAdmin Role
-            var adminRole = await RoleManager.RoleExistsAsync("Admin");
-            if (!adminRole)
+            public MyUserClaimsPrincipalFactory(UserManager<ApplicationUser> userManager,
+                RoleManager<IdentityRole> roleManager,
+                IOptions<IdentityOptions> optionsAssessor)
+                : base(userManager, roleManager, optionsAssessor)
             {
-                //here in this line we are creating admin role and seed it to the database
-                roleResult = await RoleManager.CreateAsync(new IdentityRole("Admin"));
+                _userManager = userManager;
+                _roleManager = roleManager;
             }
 
-            // Create a manager role
-            var managerRole = await RoleManager.RoleExistsAsync("Manager");
-            if (!managerRole)
+            public override async Task<ClaimsPrincipal> CreateAsync(
+                ApplicationUser user)
             {
-                //here in this line we are creating Manager role and seed it to the database
-                roleResult = await RoleManager.CreateAsync(new IdentityRole("Manager"));
-            }
-
-            // Create an approver role
-            var approverRole = await RoleManager.RoleExistsAsync("Approver");
-            if (!approverRole)
+                ClaimsPrincipal principal = await base.CreateAsync(user);
+                ((ClaimsIdentity)principal.Identity).AddClaims(new List<Claim>
             {
-                //here in this line we are creating Approver role and seed it to the database
-                roleResult = await RoleManager.CreateAsync(new IdentityRole("Approver"));
+                new Claim(UserClaims.CompanyId, user.CompanyId.ToString())
+            });
+                return principal;
             }
-
-            var employeeRole = await RoleManager.RoleExistsAsync("Employee");
-            if (!employeeRole)
-            {
-                //here in this line we are creating Employee role and seed it to the database
-                roleResult = await RoleManager.CreateAsync(new IdentityRole("Employee"));
-            }
-        }        
-    }
-    public class MyUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<ApplicationUser, IdentityRole>
-    {
-        public MyUserClaimsPrincipalFactory(UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager,
-            IOptions<IdentityOptions> optionsAssessor)
-            : base(userManager, roleManager, optionsAssessor)
-        {
-        }
-
-        public override async Task<ClaimsPrincipal> CreateAsync(
-            ApplicationUser user)
-        {
-            ClaimsPrincipal principal = await base.CreateAsync(user);
-            ((ClaimsIdentity)principal.Identity).AddClaims((IEnumerable<Claim>)new Claim[1]
-        {
-                new Claim("CompanyId", user.CompanyId.ToString())
-        });
-            return principal;
         }
     }
 }
