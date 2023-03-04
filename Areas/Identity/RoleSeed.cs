@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using VacationTracker.Models.Constants;
 
 namespace VacationTracker.Areas.Identity
 {
@@ -13,7 +14,7 @@ namespace VacationTracker.Areas.Identity
     {
         public async Task SeedAsync(RoleManager<IdentityRole> roleManager)
         {
-            var roles = new List<string> { "Admin", "Manager", "Approver", "Employee" };
+            var roles = new List<string> { Constants.Admin, Constants.Manager, Constants.Approver, Constants.Employee };
 
             foreach (var role in roles)
             {
