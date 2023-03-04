@@ -8,9 +8,11 @@ using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Models;
 using VacationTracker.Areas.Identity.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace VacationTracker.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class EmployeeController : Controller
     {
         private readonly Data.ApplicationDbContext _db;

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using VacationTracker.Models;
 
 namespace VacationTracker.Controllers
 {
+    [Authorize(Roles = "Employee")]
     public class HomeController : Controller
     {
         private readonly Data.ApplicationDbContext _db;

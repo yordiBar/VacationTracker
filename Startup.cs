@@ -63,6 +63,21 @@ namespace VacationTracker
                 options.AccessDeniedPath = "/Identity/Account/AccessDenied";
                 options.SlidingExpiration = true;
             });
+            // Authorization policy
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("RequireAdministratorRole", policy =>
+                    policy.RequireRole("Admin"));
+
+                options.AddPolicy("RequireManagerRole", policy =>
+                    policy.RequireRole("Manager"));
+
+                options.AddPolicy("RequireApproverRole", policy =>
+                    policy.RequireRole("Approver"));
+
+                options.AddPolicy("RequireEmployeeRole", policy =>
+                    policy.RequireRole("Employee"));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
