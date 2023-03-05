@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using VacationTracker.Areas.Identity.Data;
@@ -11,6 +12,7 @@ using VacationTracker.Models;
 
 namespace VacationTracker.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class RequestTypeController : Controller
     {
         private readonly VacationTracker.Data.ApplicationDbContext _db;
@@ -131,7 +133,7 @@ namespace VacationTracker.Controllers
             {
                 await _db.SaveChangesAsync();
             }
-            catch(DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException)
             {
                 if (!CheckIfRequestTypeExists(requestType.Id))
                 {
@@ -182,7 +184,7 @@ namespace VacationTracker.Controllers
             {
                 await _db.SaveChangesAsync();
             }
-            catch(DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException)
             {
                 if (!CheckIfRequestTypeExists(requestType.Id))
                 {

@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using VacationTracker.Areas.Identity.Data;
@@ -12,6 +13,7 @@ using VacationTracker.Models;
 
 namespace VacationTracker.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class GenderController : Controller
     {
         private readonly ApplicationDbContext _db;
