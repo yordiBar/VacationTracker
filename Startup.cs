@@ -114,7 +114,8 @@ namespace VacationTracker
             {
                 var roleSeed = services.GetRequiredService<IRoleSeed>();
                 var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-                roleSeed.SeedAsync(roleManager);
+                roleSeed.SeedAsync(roleManager).Wait();
+                roleSeed.SeedSystemAdminAsync(services).Wait();
             }
             catch (Exception e)
             {
