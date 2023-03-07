@@ -4,16 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using VacationTracker.Areas.Identity.Data;
+using VacationTracker.Areas.Identity.Interfaces;
 using VacationTracker.Models.Constants;
 
 namespace VacationTracker.Areas.Identity
 {
-    public interface IRoleSeed
-    {
-        Task SeedAsync(RoleManager<IdentityRole> roleManager);
-        Task SeedSystemAdminAsync(IServiceProvider serviceProvider);
-    }
-
     public class RoleSeed : IRoleSeed
     {
         public async Task SeedAsync(RoleManager<IdentityRole> roleManager)
