@@ -13,6 +13,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using VacationTracker.Areas.Identity;
 using VacationTracker.Areas.Identity.Data;
+using VacationTracker.Areas.Identity.Interfaces;
 using VacationTracker.Data;
 
 namespace VacationTracker

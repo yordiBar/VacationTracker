@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -18,12 +19,14 @@ namespace VacationTracker.Controllers
         private readonly VacationTracker.Data.ApplicationDbContext _db;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<RequestTypeController> _logger;
         public RequestTypeController(Data.ApplicationDbContext db, UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
+            SignInManager<ApplicationUser> signInManager, ILogger<RequestTypeController> logger)
         {
             _db = db;
             _userManager = userManager;
             _signInManager = signInManager;
+            _logger = logger;
         }
 
 
@@ -82,9 +85,12 @@ namespace VacationTracker.Controllers
             try
             {
                 await _db.SaveChangesAsync();
+                _logger.LogInformation($"RequestType with ID {requestType.Id} created successfully");
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
+                _logger.LogError(ex, $"DbUpdateConcurrencyException occurred while creating RequestType with ID: {requestType.Id}");
+
                 if (!CheckIfRequestTypeExists(requestType.Id))
                 {
                     return NotFound();
