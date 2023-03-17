@@ -15,6 +15,7 @@ using VacationTracker.Areas.Identity;
 using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Areas.Identity.Interfaces;
 using VacationTracker.Data;
+using VacationTracker.Models.Repositories;
 
 namespace VacationTracker
 {
@@ -40,6 +41,7 @@ namespace VacationTracker
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, MyUserClaimsPrincipalFactory>();
             services.AddControllersWithViews();
+            services.AddScoped<ILocationRepository, LocationRepository>();
             services.AddSingleton<IRoleSeed, RoleSeed>();
             services.Configure<IdentityOptions>(options =>
             {

@@ -1,39 +1,39 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.Collections.Generic;
-using System.Data;
-using System.Linq;
 using System.Threading.Tasks;
 using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Areas.Identity.Extensions;
-using VacationTracker.Data;
-using VacationTracker.Exceptions;
 using VacationTracker.Models;
+using VacationTracker.Models.Repositories;
 
 namespace VacationTracker.Controllers
 {
     [Authorize(Roles = "Admin")]
     public class LocationController : Controller
     {
-
-        private readonly ApplicationDbContext _db;
+        #region Constructors
+        private readonly ILocationRepository _locationRepository;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger _logger = Log.ForContext<LocationController>();
 
-        public LocationController(ApplicationDbContext db,
+        public LocationController(ILocationRepository locationRepository,
             UserManager<ApplicationUser> userManager)
         {
-            _db = db;
+            _locationRepository = locationRepository;
             _userManager = userManager;
         }
 
+        #endregion
+
         #region Actions
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            IEnumerable<Location> locationList = _db.Locations.Where(x => x.CompanyId == currentUsersCompanyId && !x.IsDeleted);
+            IEnumerable<Location> locationList = await _locationRepository.GetLocationsByCompanyIdAsync(currentUsersCompanyId);
             return View(locationList);
         }
 
@@ -42,15 +42,17 @@ namespace VacationTracker.Controllers
         {
             if (id == null)
             {
+                _logger.Error("Details method called with a null ID");
                 return NotFound();
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Location location = await _db.Locations.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && !x.IsDeleted);
+            Location location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
             if (location == null)
             {
+                _logger.Error("Location not found with ID {LocationId}", id);
                 return NotFound();
             }
             return View(location);
@@ -70,6 +72,7 @@ namespace VacationTracker.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.Error("Invalid model state while creating location");
                 return View(loc);
             }
 
@@ -77,8 +80,9 @@ namespace VacationTracker.Controllers
 
             loc.CompanyId = currentUsersCompanyId;
 
-            _db.Locations.Add(loc);
-            await SaveLocationChangesAsync(loc);
+            await _locationRepository.AddLocationAsync(loc);
+            _logger.Information("Location created with ID {LocationId}", loc.Id);
+
             return RedirectToAction("Index");
         }
 
@@ -87,15 +91,17 @@ namespace VacationTracker.Controllers
         {
             if (id == null)
             {
+                _logger.Error("Edit method called with a null ID");                
                 return NotFound();
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Location location = await _db.Locations.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
+            Location location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
             if (location == null)
             {
+                _logger.Error("Location not found with ID {LocationId}", id);
                 return NotFound();
             }
             return View(location);
@@ -108,28 +114,31 @@ namespace VacationTracker.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.Error("Invalid model state while editing location with ID {LocationId}", loc.Id);
                 return View(loc);
             }
 
-            _db.Attach(loc).State = EntityState.Modified;
-            await SaveLocationChangesAsync(loc);
+            await _locationRepository.UpdateLocationAsync(loc);
+            _logger.Information("Location updated with ID {LocationId}", loc.Id);
+
             return RedirectToAction("Index");
         }
 
-        [HttpGet]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
             {
+                _logger.Error("Delete method called with a null ID");
                 return NotFound();
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Location location = await _db.Locations.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
+            Location location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
             if (location == null)
             {
+                _logger.Error("Location not found with ID {LocationId}", id);
                 return NotFound();
             }
             return View(location);
@@ -142,43 +151,14 @@ namespace VacationTracker.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.Error("Invalid model state while deleting location with ID {LocationId}", loc.Id);
                 return View(loc);
             }
 
-            loc.IsDeleted = true;
+            await _locationRepository.DeleteLocationAsync(loc);
+            _logger.Information("Location deleted with ID {LocationId}", loc.Id);
 
-            _db.Attach(loc).State = EntityState.Modified;
-            await SaveLocationChangesAsync(loc);
             return RedirectToAction("Index");
-        }
-
-        #endregion
-
-        #region Helpers
-
-        private async Task SaveLocationChangesAsync(Location loc)
-        {
-            try
-            {
-                await _db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CheckIfLocationExists(loc.Id))
-                {
-                    throw new NotFoundException("Location not found.");
-                }
-                else
-                {
-                    throw;
-                }
-            }
-        }
-
-        // A boolean method to check if any locations exist
-        private bool CheckIfLocationExists(int id)
-        {
-            return _db.Locations.Any(l => l.Id == id);
         }
 
         #endregion
