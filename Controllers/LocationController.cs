@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Data;
+using VacationTracker.Exceptions;
 using VacationTracker.Models;
 
 namespace VacationTracker.Controllers
@@ -18,23 +19,21 @@ namespace VacationTracker.Controllers
     {
 
         private readonly ApplicationDbContext _db;
-        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public LocationController(ApplicationDbContext db,
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
+            UserManager<ApplicationUser> userManager)
         {
             _db = db;
             _userManager = userManager;
-            _signInManager = signInManager;
         }
 
+        #region Actions
 
         public IActionResult Index()
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            IEnumerable<Location> locationList = _db.Locations.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            IEnumerable<Location> locationList = _db.Locations.Where(x => x.CompanyId == currentUsersCompanyId && !x.IsDeleted);
             return View(locationList);
         }
 
@@ -48,19 +47,13 @@ namespace VacationTracker.Controllers
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Location location = await _db.Locations.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            Location location = await _db.Locations.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && !x.IsDeleted);
 
             if (location == null)
             {
                 return NotFound();
             }
             return View(location);
-        }
-
-        // A boolean method to check if any locations exist
-        private bool CheckIfLocationExists(int id)
-        {
-            return _db.Locations.Any(l => l.Id == id);
         }
 
         // GET: Location/Create
@@ -85,22 +78,7 @@ namespace VacationTracker.Controllers
             loc.CompanyId = currentUsersCompanyId;
 
             _db.Locations.Add(loc);
-
-            try
-            {
-                await _db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CheckIfLocationExists(loc.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await SaveLocationChangesAsync(loc);
             return RedirectToAction("Index");
         }
 
@@ -134,22 +112,7 @@ namespace VacationTracker.Controllers
             }
 
             _db.Attach(loc).State = EntityState.Modified;
-
-            try
-            {
-                await _db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CheckIfLocationExists(loc.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await SaveLocationChangesAsync(loc);
             return RedirectToAction("Index");
         }
 
@@ -185,7 +148,16 @@ namespace VacationTracker.Controllers
             loc.IsDeleted = true;
 
             _db.Attach(loc).State = EntityState.Modified;
+            await SaveLocationChangesAsync(loc);
+            return RedirectToAction("Index");
+        }
 
+        #endregion
+
+        #region Helpers
+
+        private async Task SaveLocationChangesAsync(Location loc)
+        {
             try
             {
                 await _db.SaveChangesAsync();
@@ -194,14 +166,21 @@ namespace VacationTracker.Controllers
             {
                 if (!CheckIfLocationExists(loc.Id))
                 {
-                    return NotFound();
+                    throw new NotFoundException("Location not found.");
                 }
                 else
                 {
                     throw;
                 }
             }
-            return RedirectToAction("Index");
         }
+
+        // A boolean method to check if any locations exist
+        private bool CheckIfLocationExists(int id)
+        {
+            return _db.Locations.Any(l => l.Id == id);
+        }
+
+        #endregion
     }
 }
