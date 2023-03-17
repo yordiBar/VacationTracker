@@ -58,6 +58,9 @@
                 <input asp-for="DisplayStartDate" class="form-control" readonly="readonly" />
                 <span asp-validation-for="DisplayStartDate" class="text-danger"></span>
             </div>
+            <hr />
+            <h4>Assign Role</h4>
+            <hr />
             <div class="form-group form-check">
                 <label class="form-check-label">
                     <input class="form-check-input" asp-for="IsApprover" /> @Html.DisplayNameFor(model => model.IsApprover)
@@ -73,6 +76,9 @@
                     <input class="form-check-input" asp-for="IsAdmin" /> @Html.DisplayNameFor(model => model.IsAdmin)
                 </label>
             </div>
+            <hr />
+            <h4>Choose Working Days</h4>
+            <hr />
             <div class="form-group form-check">
                 <label class="form-check-label">
                     <input class="form-check-input" asp-for="Mon" /> @Html.DisplayNameFor(model => model.Mon)
