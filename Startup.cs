@@ -42,6 +42,7 @@ namespace VacationTracker
             services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, MyUserClaimsPrincipalFactory>();
             services.AddControllersWithViews();
             services.AddScoped<ILocationRepository, LocationRepository>();
+            services.AddScoped<IDepartmentRepository, DepartmentRepository>();
             services.AddSingleton<IRoleSeed, RoleSeed>();
             services.Configure<IdentityOptions>(options =>
             {

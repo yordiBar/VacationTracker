@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,30 +11,36 @@ using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Data;
 using VacationTracker.Models;
+using VacationTracker.Models.Repositories;
 
 namespace VacationTracker.Controllers
 {
     [Authorize(Roles = "Admin")]
     public class DepartmentController : Controller
     {
-        private readonly ApplicationDbContext _db;
+        #region Contructors
+        private readonly IDepartmentRepository _departmentRepository;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly Serilog.ILogger _logger = Log.ForContext<DepartmentController>();
 
-        public DepartmentController(ApplicationDbContext db,
+        public DepartmentController(IDepartmentRepository departmentRepostitory,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager)
         {
-            _db = db;
+            _departmentRepository = departmentRepostitory;
             _userManager = userManager;
             _signInManager = signInManager;
         }
+        #endregion
+
+        #region Actions
 
         // GET: Department/Details
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            IEnumerable<Department> departmentList = _db.Departments.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            IEnumerable<Department> departmentList = await _departmentRepository.GetDepartmentsByCompanyIdAsync(currentUsersCompanyId);
             return View(departmentList);
         }
 
@@ -41,16 +49,19 @@ namespace VacationTracker.Controllers
         {
             if (id == null)
             {
+                _logger.Error("Details method called with a null ID");
                 return NotFound();
             }
 
-            var department = await _db.Departments
-                .FirstOrDefaultAsync(m => m.Id == id);
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            Department department = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+
             if (department == null)
             {
+                _logger.Error("Department not found with ID {DepartmentId}", id);
                 return NotFound();
             }
-
             return View(department);
         }
 
@@ -69,6 +80,7 @@ namespace VacationTracker.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.Error("Invalid model state while creating department");
                 return View(dept);
             }
 
@@ -76,23 +88,8 @@ namespace VacationTracker.Controllers
 
             dept.CompanyId = currentUsersCompanyId;
 
-            _db.Departments.Add(dept);
-
-            try
-            {
-                await _db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CheckIfDepartmentExists(dept.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _departmentRepository.AddDepartmentAsync(dept);
+            _logger.Information("Department created with ID {DepartmentId}", dept.Id);
 
             return RedirectToAction("Index");
         }
@@ -102,13 +99,17 @@ namespace VacationTracker.Controllers
         {
             if (id == null)
             {
+                _logger.Error("Edit method called with a null ID");
                 return NotFound();
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            var department = await _db.Departments.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
+
+            Department department = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+
             if (department == null)
             {
+                _logger.Error("Department not found with ID {DepartmentId}", id);
                 return NotFound();
             }
             return View(department);
@@ -121,26 +122,12 @@ namespace VacationTracker.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.Error("Invalid model state while editing department with ID {DepartmentId}", department.Id);
                 return View(department);
             }
 
-            _db.Attach(department).State = EntityState.Modified;
-
-            try
-            {
-                await _db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CheckIfDepartmentExists(department.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _departmentRepository.UpdateDepartmentAsync(department);
+            _logger.Information("Department updated with ID {DepartmentId}", department.Id);
 
             return RedirectToAction("Index");
         }
@@ -150,33 +137,38 @@ namespace VacationTracker.Controllers
         {
             if (id == null)
             {
+                _logger.Error("Delete method called with a null ID");
                 return NotFound();
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            var department = await _db.Departments.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
+
+            Department department = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+
             if (department == null)
             {
+                _logger.Error("Department not found with ID {DepartmentId}", id);
                 return NotFound();
             }
 
             return View(department);
         }
 
-        // POST: Department/Delete
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> Delete(Department department)
         {
-            var department = await _db.Departments.FindAsync(id);
-            _db.Departments.Remove(department);
-            await _db.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
+            if (!ModelState.IsValid)
+            {
+                _logger.Error("Invalid model state while deleting department with ID {DepartmentId}", department.Id);
+                return View(department);
+            }
 
-        private bool CheckIfDepartmentExists(int id)
-        {
-            return _db.Departments.Any(e => e.Id == id);
+            await _departmentRepository.DeleteDepartmentAsync(department);
+            _logger.Information("Department deleted with ID {DepartmentId}", department.Id);
+
+            return RedirectToAction("Index");
         }
+        #endregion
     }
 }
