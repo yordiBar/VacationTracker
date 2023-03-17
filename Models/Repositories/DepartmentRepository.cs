@@ -25,7 +25,8 @@ namespace VacationTracker.Models.Repositories
         public async Task DeleteDepartmentAsync(Department department)
         {
             department.IsDeleted = true;
-            _db.Attach(department).State = EntityState.Modified;
+            _db.Attach(department);
+            _db.Entry(department).Property(x => x.IsDeleted).IsModified = true;
             await _db.SaveChangesAsync();
         }
 

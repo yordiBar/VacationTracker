@@ -44,7 +44,8 @@ namespace VacationTracker.Models.Repositories
         public async Task DeleteLocationAsync(Location location)
         {
             location.IsDeleted = true;
-            _db.Attach(location).State = EntityState.Modified;
+            _db.Attach(location);
+            _db.Entry(location).Property(x => x.IsDeleted).IsModified = true;
             await _db.SaveChangesAsync();
         }
 
