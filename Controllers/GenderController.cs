@@ -2,37 +2,43 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Areas.Identity.Extensions;
-using VacationTracker.Data;
 using VacationTracker.Models;
+using VacationTracker.Models.Repositories;
 
 namespace VacationTracker.Controllers
 {
     [Authorize(Roles = "Admin")]
     public class GenderController : Controller
     {
-        private readonly ApplicationDbContext _db;
+        #region Constructors
+        private readonly IGenderRepository _genderRepository;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger _logger = Log.ForContext<GenderController>();
 
-        public GenderController(ApplicationDbContext db,
+        public GenderController(IGenderRepository genderRepository,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager)
         {
-            _db = db;
+            _genderRepository = genderRepository;
             _userManager = userManager;
             _signInManager = signInManager;
         }
 
-        public IActionResult Index()
+        #endregion
+
+        #region Actions
+
+        public async Task<IActionResult> Index()
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            IEnumerable<Gender> genderList = _db.Genders.Where(g => g.CompanyId == currentUsersCompanyId && g.IsDeleted == false);
+            IEnumerable<Gender> genderList = await _genderRepository.GetGendersByCompanyIdAsync(currentUsersCompanyId);
             return View(genderList);
         }
 
@@ -40,24 +46,20 @@ namespace VacationTracker.Controllers
         {
             if (id == null)
             {
+                _logger.Error("Details method called with a null ID");
                 return NotFound();
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Gender gender = await _db.Genders.FirstOrDefaultAsync(g => g.Id == id && g.CompanyId == currentUsersCompanyId && g.IsDeleted == false);
+            Gender gender = await _genderRepository.GetGenderByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId); 
 
             if (gender == null)
             {
+                _logger.Error("Gender not found with ID {GenderId}", id);
                 return NotFound();
             }
             return View(gender);
-        }
-
-        // A boolean method to check if any genders exist
-        private bool CheckIfGenderExists(int id)
-        {
-            return _db.Genders.Any(g => g.Id == id);
         }
 
         [HttpGet]
@@ -73,6 +75,7 @@ namespace VacationTracker.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.Error("Invalid model state while creating gender");
                 return View(gender);
             }
 
@@ -80,23 +83,9 @@ namespace VacationTracker.Controllers
 
             gender.CompanyId = currentUsersCompanyId;
 
-            _db.Genders.Add(gender);
+            await _genderRepository.AddGenderAsync(gender);
+            _logger.Information("Gender created with ID {GenderId}", gender.Id);
 
-            try
-            {
-                await _db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CheckIfGenderExists(gender.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
             return RedirectToAction("Index");
         }
 
@@ -105,15 +94,17 @@ namespace VacationTracker.Controllers
         {
             if (id == null)
             {
+                _logger.Error("Edit method called with a null ID");
                 return NotFound();
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Gender gender = await _db.Genders.FirstOrDefaultAsync(g => g.Id == id && g.CompanyId == currentUsersCompanyId);
+            Gender gender = await _genderRepository.GetGenderByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
             if (gender == null)
             {
+                _logger.Error("Gender not found with ID {GenderId}", id);
                 return NotFound();
             }
             return View(gender);
@@ -126,26 +117,13 @@ namespace VacationTracker.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.Error("Invalid model state while editing gender with ID {GenderId}", gender.Id);
                 return View(gender);
             }
 
-            _db.Attach(gender).State = EntityState.Modified;
+            await _genderRepository.UpdateGenderAsync(gender);
+            _logger.Information("Gender updated with ID {GenderId}", gender.Id);
 
-            try
-            {
-                await _db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CheckIfGenderExists(gender.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
             return RedirectToAction("Index");
         }
 
@@ -154,15 +132,17 @@ namespace VacationTracker.Controllers
         {
             if (id == null)
             {
+                _logger.Error("Delete method called with a null ID");
                 return NotFound();
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Gender gender = await _db.Genders.FirstOrDefaultAsync(g => g.Id == id && g.CompanyId == currentUsersCompanyId);
+            Gender gender = await _genderRepository.GetGenderByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
             if (gender == null)
             {
+                _logger.Error("Gender not found with ID {GenderId}", id);
                 return NotFound();
             }
             return View(gender);
@@ -175,29 +155,15 @@ namespace VacationTracker.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.Error("Invalid model state while deleting gender with ID {GenderId}", gender.Id);
                 return View(gender);
             }
 
-            gender.IsDeleted = true;
+            await _genderRepository.DeleteGenderAsync(gender);
+            _logger.Information("Gender deleted with ID {GenderId}", gender.Id);
 
-            _db.Attach(gender).State = EntityState.Modified;
-
-            try
-            {
-                await _db.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CheckIfGenderExists(gender.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
             return RedirectToAction("Index");
         }
+        #endregion
     }
 }
