@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -13,6 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Threading.Tasks;
 using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Models;
 
@@ -33,7 +33,7 @@ namespace VacationTracker.Areas.Identity.Pages.Account
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
             VacationTracker.Data.ApplicationDbContext db)
-            
+
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -90,39 +90,43 @@ namespace VacationTracker.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
-                Company company = new()
-                {
-                    Address = Input.Address,
-                    CompanyName = Input.CompanyName,
-                    ContactEmail = Input.Email,
-                    PhoneNumber = Input.PhoneNumber,
-                    ContactName = Input.ContactName
-                };
-
-                var c = _db.Companies.Add(company);
-                await _db.SaveChangesAsync();
-
-                Employee employee = new()
-                {
-                    DisplayName = Input.ContactName,
-                    Email = Input.Email,
-                    IsDeleted = false,
-                    CompanyId = company.Id,
-                    StartDate = DateTime.Now,
-                    IsAdmin = true,
-                    Firstname = "admin",
-                    Surname = "admin",
-                    JobTitle = "admin"
-                };
-
-                var e = _db.Employees.Add(employee);
-                await _db.SaveChangesAsync();
-
-                var user = new ApplicationUser { UserName = Input.Email, Email = Input.Email, CompanyId = company.Id };
+                var user = new ApplicationUser { UserName = Input.Email, Email = Input.Email };
                 var result = await _userManager.CreateAsync(user, Input.Password);
+
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
+
+                    Company company = new()
+                    {
+                        Address = Input.Address,
+                        CompanyName = Input.CompanyName,
+                        ContactEmail = Input.Email,
+                        PhoneNumber = Input.PhoneNumber,
+                        ContactName = Input.ContactName
+                    };
+
+                    var c = _db.Companies.Add(company);
+                    await _db.SaveChangesAsync();
+
+                    Employee employee = new()
+                    {
+                        DisplayName = Input.ContactName,
+                        Email = Input.Email,
+                        IsDeleted = false,
+                        CompanyId = company.Id,
+                        StartDate = DateTime.Now,
+                        IsAdmin = true,
+                        Firstname = "admin",
+                        Surname = "admin",
+                        JobTitle = "admin"
+                    };
+
+                    var e = _db.Employees.Add(employee);
+                    await _db.SaveChangesAsync();
+
+                    user.CompanyId = company.Id;
+                    await _userManager.UpdateAsync(user);
 
                     //add user to all roles
                     ApplicationUser newuser = await _userManager.FindByEmailAsync(Input.Email);
@@ -153,12 +157,14 @@ namespace VacationTracker.Areas.Identity.Pages.Account
                         return LocalRedirect(returnUrl);
                     }
                 }
-                foreach (var error in result.Errors)
+                else
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                }                
             }
-
             // If we got this far, something failed, redisplay form
             return Page();
         }

@@ -1,12 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Models;
 using VacationTracker.Models.Repositories;
@@ -18,17 +14,11 @@ namespace VacationTracker.Controllers
     {
         #region Constructors
         private readonly IGenderRepository _genderRepository;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger _logger = Log.ForContext<GenderController>();
 
-        public GenderController(IGenderRepository genderRepository,
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
+        public GenderController(IGenderRepository genderRepository)
         {
             _genderRepository = genderRepository;
-            _userManager = userManager;
-            _signInManager = signInManager;
         }
 
         #endregion
@@ -52,7 +42,7 @@ namespace VacationTracker.Controllers
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Gender gender = await _genderRepository.GetGenderByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId); 
+            Gender gender = await _genderRepository.GetGenderByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
             if (gender == null)
             {

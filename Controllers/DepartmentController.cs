@@ -1,15 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Areas.Identity.Extensions;
-using VacationTracker.Data;
 using VacationTracker.Models;
 using VacationTracker.Models.Repositories;
 
@@ -20,17 +14,11 @@ namespace VacationTracker.Controllers
     {
         #region Contructors
         private readonly IDepartmentRepository _departmentRepository;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly UserManager<ApplicationUser> _userManager;
         private readonly Serilog.ILogger _logger = Log.ForContext<DepartmentController>();
 
-        public DepartmentController(IDepartmentRepository departmentRepostitory,
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
+        public DepartmentController(IDepartmentRepository departmentRepostitory)
         {
             _departmentRepository = departmentRepostitory;
-            _userManager = userManager;
-            _signInManager = signInManager;
         }
         #endregion
 

@@ -16,18 +16,15 @@ namespace VacationTracker.Controllers
     public class EmployeeController : Controller
     {
         private readonly Data.ApplicationDbContext _db;
-        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
 
         // Creating a connection to the database
-        public EmployeeController(VacationTracker.Data.ApplicationDbContext db,
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager
+        public EmployeeController(Data.ApplicationDbContext db,
+            UserManager<ApplicationUser> userManager
             )
         {
             _db = db;
             _userManager = userManager;
-            _signInManager = signInManager;
         }
 
         public IActionResult Index()

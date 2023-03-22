@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Models;
 using VacationTracker.Models.Repositories;
@@ -16,14 +14,11 @@ namespace VacationTracker.Controllers
     {
         #region Constructors
         private readonly ILocationRepository _locationRepository;
-        private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger _logger = Log.ForContext<LocationController>();
 
-        public LocationController(ILocationRepository locationRepository,
-            UserManager<ApplicationUser> userManager)
+        public LocationController(ILocationRepository locationRepository)
         {
             _locationRepository = locationRepository;
-            _userManager = userManager;
         }
 
         #endregion
@@ -91,7 +86,7 @@ namespace VacationTracker.Controllers
         {
             if (id == null)
             {
-                _logger.Error("Edit method called with a null ID");                
+                _logger.Error("Edit method called with a null ID");
                 return NotFound();
             }
 

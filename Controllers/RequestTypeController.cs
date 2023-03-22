@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -7,7 +6,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Models;
 
@@ -16,16 +14,11 @@ namespace VacationTracker.Controllers
     [Authorize(Roles = "Admin")]
     public class RequestTypeController : Controller
     {
-        private readonly VacationTracker.Data.ApplicationDbContext _db;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly Data.ApplicationDbContext _db;
         private readonly ILogger<RequestTypeController> _logger;
-        public RequestTypeController(Data.ApplicationDbContext db, UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager, ILogger<RequestTypeController> logger)
+        public RequestTypeController(Data.ApplicationDbContext db, ILogger<RequestTypeController> logger)
         {
             _db = db;
-            _userManager = userManager;
-            _signInManager = signInManager;
             _logger = logger;
         }
 
