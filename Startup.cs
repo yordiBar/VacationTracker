@@ -44,6 +44,7 @@ namespace VacationTracker
             services.AddScoped<ILocationRepository, LocationRepository>();
             services.AddScoped<IDepartmentRepository, DepartmentRepository>();
             services.AddScoped<IGenderRepository, GenderRepository>();
+            services.AddScoped<IAllowanceRepository, AllowanceRepository>();
             services.AddSingleton<IRoleSeed, RoleSeed>();
             services.Configure<IdentityOptions>(options =>
             {

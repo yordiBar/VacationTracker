@@ -1,27 +1,26 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Serilog;
-using VacationTracker.Data;
+using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Models;
+using VacationTracker.Models.Repositories;
 
 namespace VacationTracker.Controllers
 {
     public class AllowanceController : Controller
     {
         #region Constructors
-        private readonly ApplicationDbContext _context;
+        private readonly IAllowanceRepository _allowanceRepository;
         private readonly ILogger _logger = Log.ForContext<LocationController>();
         #endregion
 
         #region Fields
-        public AllowanceController(ApplicationDbContext context)
+        public AllowanceController(IAllowanceRepository allowanceRepository)
         {
-            _context = context;
+            _allowanceRepository = allowanceRepository;
         }
         #endregion
 
@@ -29,21 +28,27 @@ namespace VacationTracker.Controllers
         // GET: Allowance
         public async Task<IActionResult> Index()
         {
-              return View(await _context.Allowances.ToListAsync());
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            IEnumerable<Allowance> allowances = await _allowanceRepository.GetAllowancesByCompanyIdAsync(currentUsersCompanyId);
+            return View(allowances);
         }
 
-        // GET: Allowance/Details/5
+        // GET: Allowance/Details
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null || _context.Allowances == null)
+            if (id == null)
             {
+                _logger.Error("Details method called with a null ID");
                 return NotFound();
             }
 
-            var allowance = await _context.Allowances
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (allowance == null)
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            Allowance allowance = await _allowanceRepository.GetAllowanceByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+
+            if(allowance == null)
             {
+                _logger.Error("Allowance not found with ID {AllowanceId}", id);
                 return NotFound();
             }
 
@@ -51,9 +56,10 @@ namespace VacationTracker.Controllers
         }
 
         // GET: Allowance/Create
+        [HttpGet]
         public IActionResult Create()
         {
-            return View();
+            return View(new Allowance());
         }
 
         // POST: Allowance/Create
@@ -63,26 +69,38 @@ namespace VacationTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,From,To,Amount,CarryOver,EmployeeId,CompanyId")] Allowance allowance)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                _context.Add(allowance);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                _logger.Error("Invalid model state while creating allowance");
+                return View(allowance);
             }
-            return View(allowance);
+
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            allowance.CompanyId = currentUsersCompanyId;
+
+            await _allowanceRepository.AddAllowanceAsync(allowance);
+            _logger.Information("Allowance created with ID {AllowanceId}", allowance.Id);
+
+            return RedirectToAction("Index");
         }
 
         // GET: Allowance/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.Allowances == null)
+            if (id == null)
             {
+                _logger.Error("Edit method called with a null ID");
                 return NotFound();
             }
 
-            var allowance = await _context.Allowances.FindAsync(id);
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            Allowance allowance = await _allowanceRepository.GetAllowanceByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+
             if (allowance == null)
             {
+                _logger.Error("Allowance not found with ID {AllowanceId}", id);
                 return NotFound();
             }
             return View(allowance);
@@ -95,77 +113,56 @@ namespace VacationTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,From,To,Amount,CarryOver,EmployeeId,CompanyId")] Allowance allowance)
         {
-            if (id != allowance.Id)
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                _logger.Error("Invalid model state while editing department with ID {AllowanceId}", allowance.Id);
+                return View(allowance);
             }
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(allowance);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!AllowanceExists(allowance.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(allowance);
+            await _allowanceRepository.UpdateAllowanceAsync(allowance);
+            _logger.Information("Allowance updated with ID {AllowanceId}", allowance.Id);
+
+            return RedirectToAction("Index");
         }
 
         // GET: Allowance/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null || _context.Allowances == null)
+            if (id == null)
             {
+                _logger.Error("Delete method called with a null ID");
                 return NotFound();
             }
 
-            var allowance = await _context.Allowances
-                .FirstOrDefaultAsync(m => m.Id == id);
+            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            Allowance allowance = await _allowanceRepository.GetAllowanceByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+
             if (allowance == null)
             {
+                _logger.Error("Allowance not found with ID {AllowanceId}", id);
                 return NotFound();
             }
 
             return View(allowance);
         }
 
-        // POST: Allowance/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            if (_context.Allowances == null)
-            {
-                return Problem("Entity set 'ApplicationDbContext.Allowances'  is null.");
-            }
-            var allowance = await _context.Allowances.FindAsync(id);
-            if (allowance != null)
-            {
-                _context.Allowances.Remove(allowance);
-            }
-            
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-        #endregion
+        //// POST: Allowance/Delete/5
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> Delete(Allowance allowance)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        _logger.Error("Invalid model state while deleting allowance with ID {AllowanceId}", allowance.Id);
+        //        return View(allowance);
+        //    }
 
-        #region Helpers
-        private bool AllowanceExists(int id)
-        {
-          return _context.Allowances.Any(e => e.Id == id);
-        }
+        //    await _allowanceRepository.DeleteAllowanceAsync(allowance);
+        //    _logger.Information("Allowance deleted with ID {AllowanceId}", allowance.Id);
+
+        //    return RedirectToAction("Index");
+        //}
         #endregion
     }
 }
