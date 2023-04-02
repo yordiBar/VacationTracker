@@ -9,14 +9,20 @@ namespace VacationTracker.Controllers
     [Authorize(Roles = "Employee")]
     public class HomeController : Controller
     {
+        #region Constructors
         private readonly Data.ApplicationDbContext _db;
         private readonly ILogger<HomeController> _logger;
+        #endregion
+
+        #region Fields
         public HomeController(Data.ApplicationDbContext db, ILogger<HomeController> logger)
         {
             _db = db;
             _logger = logger;
         }
+        #endregion
 
+        #region Actions
         public IActionResult Index()
         {
             return View();
@@ -38,5 +44,6 @@ namespace VacationTracker.Controllers
             _logger.LogError("Error action called");
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+        #endregion
     }
 }

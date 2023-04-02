@@ -15,12 +15,13 @@ namespace VacationTracker.Controllers
         #region Constructors
         private readonly ILocationRepository _locationRepository;
         private readonly ILogger _logger = Log.ForContext<LocationController>();
+        #endregion
 
+        #region Fields
         public LocationController(ILocationRepository locationRepository)
         {
             _locationRepository = locationRepository;
         }
-
         #endregion
 
         #region Actions

@@ -15,7 +15,9 @@ namespace VacationTracker.Controllers
         #region Contructors
         private readonly IDepartmentRepository _departmentRepository;
         private readonly Serilog.ILogger _logger = Log.ForContext<DepartmentController>();
+        #endregion
 
+        #region Fields
         public DepartmentController(IDepartmentRepository departmentRepostitory)
         {
             _departmentRepository = departmentRepostitory;

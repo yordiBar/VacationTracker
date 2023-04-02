@@ -15,9 +15,12 @@ namespace VacationTracker.Controllers
     [Authorize(Roles = "Admin")]
     public class EmployeeController : Controller
     {
+        #region Constructors
         private readonly Data.ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        #endregion
 
+        #region Fields
         // Creating a connection to the database
         public EmployeeController(Data.ApplicationDbContext db,
             UserManager<ApplicationUser> userManager
@@ -26,7 +29,9 @@ namespace VacationTracker.Controllers
             _db = db;
             _userManager = userManager;
         }
+        #endregion
 
+        #region Actions
         public IActionResult Index()
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
@@ -344,11 +349,9 @@ namespace VacationTracker.Controllers
             }
             return RedirectToAction("Index");
         }
+        #endregion
 
-        //********************************************************************************************************************
-        //***************************************************HELPER METHODS***************************************************
-        //********************************************************************************************************************
-
+        #region Helpers
         [HttpGet]
         public IActionResult GetDepartmentById(int Id)
         {
@@ -514,5 +517,6 @@ namespace VacationTracker.Controllers
                                  };
             return Json(serialisedJson);
         }
+        #endregion
     }
 }

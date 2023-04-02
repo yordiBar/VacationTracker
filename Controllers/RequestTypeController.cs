@@ -14,15 +14,20 @@ namespace VacationTracker.Controllers
     [Authorize(Roles = "Admin")]
     public class RequestTypeController : Controller
     {
+        #region Constructors
         private readonly Data.ApplicationDbContext _db;
         private readonly ILogger<RequestTypeController> _logger;
+        #endregion
+
+        #region Fields
         public RequestTypeController(Data.ApplicationDbContext db, ILogger<RequestTypeController> logger)
         {
             _db = db;
             _logger = logger;
         }
+        #endregion
 
-
+        #region Actions
         // GET: RequestTypeController
         public IActionResult Index()
         {
@@ -196,5 +201,6 @@ namespace VacationTracker.Controllers
             }
             return RedirectToAction("Index");
         }
+        #endregion
     }
 }
