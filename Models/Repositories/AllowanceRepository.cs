@@ -33,14 +33,14 @@ namespace VacationTracker.Models.Repositories
         public async Task<Allowance> GetAllowanceByIdAndCompanyIdAsync(int id, int companyId)
         {
             return await _db.Allowances
-                .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == companyId);
+                .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == companyId && !x.IsDeleted);
         }
 
         public async Task<IEnumerable<Allowance>> GetAllowancesByCompanyIdAsync(int companyId)
         {
             DateTime dateTime = DateTime.Now;
             return await _db.Allowances
-                .Where(x => x.CompanyId == companyId && x.To.Year == dateTime.Year)
+                .Where(x => x.CompanyId == companyId && x.To.Year == dateTime.Year && !x.IsDeleted)
                 .ToListAsync();
         }
 
