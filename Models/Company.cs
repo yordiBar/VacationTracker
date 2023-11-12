@@ -14,5 +14,6 @@ namespace VacationTracker.Models
         public string PhoneNumber { get; set; }
         public string ContactEmail { get; set; }
         public string ContactName { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }

@@ -15,6 +15,7 @@ namespace VacationTracker.Models
         public string Description { get; set; }
         public string Status { get; set; }
         public int RequestCreatedByEmployeeId { get; set; }
+        public bool IsActive { get; set; }
 
         [DisplayFormat(DataFormatString = "{0:d}", ApplyFormatInEditMode = true)]
         public DateTime From { get; set; }

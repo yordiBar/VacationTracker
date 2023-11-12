@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace VacationTracker.Models.Repositories
+namespace VacationTracker.Models.Interfaces
 {
     public interface IDepartmentRepository
     {

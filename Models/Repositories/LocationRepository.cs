@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using VacationTracker.Data;
+using VacationTracker.Models.Interfaces;
 
 namespace VacationTracker.Models.Repositories
 {

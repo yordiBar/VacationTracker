@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Models;
-using VacationTracker.Models.Repositories;
+using VacationTracker.Models.Interfaces;
 
 namespace VacationTracker.Controllers
 {

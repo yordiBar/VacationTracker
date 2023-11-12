@@ -1,8 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using VacationTracker.Data;
+using VacationTracker.Models.Interfaces;
 
 namespace VacationTracker.Models.Repositories
 {
@@ -36,8 +38,9 @@ namespace VacationTracker.Models.Repositories
 
         public async Task<IEnumerable<Allowance>> GetAllowancesByCompanyIdAsync(int companyId)
         {
+            DateTime dateTime = DateTime.Now;
             return await _db.Allowances
-                .Where(x => x.CompanyId == companyId)
+                .Where(x => x.CompanyId == companyId && x.To.Year == dateTime.Year)
                 .ToListAsync();
         }
 

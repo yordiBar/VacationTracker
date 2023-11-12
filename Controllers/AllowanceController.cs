@@ -1,15 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Models;
-using VacationTracker.Models.Repositories;
+using VacationTracker.Models.Interfaces;
 
 namespace VacationTracker.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class AllowanceController : Controller
     {
         #region Constructors
@@ -46,7 +46,7 @@ namespace VacationTracker.Controllers
 
             Allowance allowance = await _allowanceRepository.GetAllowanceByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
-            if(allowance == null)
+            if (allowance == null)
             {
                 _logger.Error("Allowance not found with ID {AllowanceId}", id);
                 return NotFound();
