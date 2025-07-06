@@ -15,8 +15,8 @@ using VacationTracker.Areas.Identity;
 using VacationTracker.Areas.Identity.Data;
 using VacationTracker.Areas.Identity.Interfaces;
 using VacationTracker.Data;
-using VacationTracker.Models.Interfaces;
-using VacationTracker.Models.Repositories;
+using VacationTracker.Interfaces;
+using VacationTracker.Repositories;
 
 namespace VacationTracker
 {

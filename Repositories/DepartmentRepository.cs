@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using VacationTracker.Data;
-using VacationTracker.Models.Interfaces;
+using VacationTracker.Interfaces;
+using VacationTracker.Models;
 
-namespace VacationTracker.Models.Repositories
+namespace VacationTracker.Repositories
 {
     public class DepartmentRepository : IDepartmentRepository
     {

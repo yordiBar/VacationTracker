@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using VacationTracker.Models;
 
-namespace VacationTracker.Models.Interfaces
+namespace VacationTracker.Interfaces
 {
     public interface IGenderRepository
     {

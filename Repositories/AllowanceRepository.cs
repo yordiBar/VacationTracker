@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using VacationTracker.Data;
-using VacationTracker.Models.Interfaces;
+using VacationTracker.Interfaces;
+using VacationTracker.Models;
 
-namespace VacationTracker.Models.Repositories
+namespace VacationTracker.Repositories
 {
     public class AllowanceRepository : IAllowanceRepository
     {
@@ -52,7 +53,7 @@ namespace VacationTracker.Models.Repositories
 
         public Task<bool> AllowanceExistsAsync(int id)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
     }
 }
