@@ -12,7 +12,7 @@ using VacationTracker.Models;
 
 namespace VacationTracker.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SystemAdmin")]
     public class EmployeeController : Controller
     {
         #region Constructors
@@ -35,7 +35,18 @@ namespace VacationTracker.Controllers
         public IActionResult Index()
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            IEnumerable<Employee> employeeList = _db.Employees.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            
+            // System admin (CompanyId = -1) can access all employees
+            IEnumerable<Employee> employeeList;
+            if (currentUsersCompanyId == -1)
+            {
+                employeeList = _db.Employees.Where(x => x.IsDeleted == false);
+            }
+            else
+            {
+                employeeList = _db.Employees.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            }
+            
             return View(employeeList);
         }
 
@@ -149,7 +160,17 @@ namespace VacationTracker.Controllers
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            Employee employee = await _db.Employees.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            
+            // System admin (CompanyId = -1) can access all employees
+            Employee employee;
+            if (currentUsersCompanyId == -1)
+            {
+                employee = await _db.Employees.FirstOrDefaultAsync(x => x.Id == id && x.IsDeleted == false);
+            }
+            else
+            {
+                employee = await _db.Employees.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            }
 
             ApplicationUser newuser = await _userManager.FindByEmailAsync(employee.Email);
             employee.IsAdmin = await _userManager.IsInRoleAsync(newuser, "Admin");
@@ -264,14 +285,19 @@ namespace VacationTracker.Controllers
         //check if there is an allowance for the current year for the employee if not create
         private async Task CreateAllowanceIfRequired(Employee emp, int currentUsersCompanyId)
         {
-            if (_db.Allowances.Where(x => x.EmployeeId == emp.Id && x.CompanyId == currentUsersCompanyId).Count() == 0)
+            // System admin (CompanyId = -1) can create allowances for any company
+            var allowanceQuery = currentUsersCompanyId == -1 
+                ? _db.Allowances.Where(x => x.EmployeeId == emp.Id)
+                : _db.Allowances.Where(x => x.EmployeeId == emp.Id && x.CompanyId == currentUsersCompanyId);
+                
+            if (allowanceQuery.Count() == 0)
             {
                 _db.Allowances.Add(new Allowance
                 {
                     From = new DateTime(2020, 1, 1),
                     To = new DateTime(2020, 12, 31),
                     EmployeeId = emp.Id,
-                    CompanyId = currentUsersCompanyId,
+                    CompanyId = emp.CompanyId, // Use employee's company ID, not current user's
                     Amount = 20,
                     CarryOver = 0
                 });
@@ -281,7 +307,7 @@ namespace VacationTracker.Controllers
                     From = new DateTime(2021, 1, 1),
                     To = new DateTime(2021, 12, 31),
                     EmployeeId = emp.Id,
-                    CompanyId = currentUsersCompanyId,
+                    CompanyId = emp.CompanyId, // Use employee's company ID, not current user's
                     Amount = 20,
                     CarryOver = 0
                 });
@@ -291,7 +317,7 @@ namespace VacationTracker.Controllers
                     From = new DateTime(2022, 1, 1),
                     To = new DateTime(2022, 12, 31),
                     EmployeeId = emp.Id,
-                    CompanyId = currentUsersCompanyId,
+                    CompanyId = emp.CompanyId, // Use employee's company ID, not current user's
                     Amount = 20,
                     CarryOver = 0
                 });
@@ -310,7 +336,16 @@ namespace VacationTracker.Controllers
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Employee emp = await _db.Employees.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
+            // System admin (CompanyId = -1) can access all employees
+            Employee emp;
+            if (currentUsersCompanyId == -1)
+            {
+                emp = await _db.Employees.FirstOrDefaultAsync(x => x.Id == id);
+            }
+            else
+            {
+                emp = await _db.Employees.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
+            }
 
             if (emp == null)
             {
@@ -357,7 +392,16 @@ namespace VacationTracker.Controllers
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Department dept = _db.Departments.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+            // System admin (CompanyId = -1) can access all departments
+            Department dept;
+            if (currentUsersCompanyId == -1)
+            {
+                dept = _db.Departments.Where(x => x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+            }
+            else
+            {
+                dept = _db.Departments.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+            }
 
             if (dept != null)
             {
@@ -384,7 +428,16 @@ namespace VacationTracker.Controllers
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            List<Department> departmentNameList = _db.Departments.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false).ToList();
+            // System admin (CompanyId = -1) can access all departments
+            List<Department> departmentNameList;
+            if (currentUsersCompanyId == -1)
+            {
+                departmentNameList = _db.Departments.Where(x => x.IsDeleted == false).ToList();
+            }
+            else
+            {
+                departmentNameList = _db.Departments.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false).ToList();
+            }
 
             List<Department> departmentNameResults = new();
 
@@ -412,7 +465,16 @@ namespace VacationTracker.Controllers
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Location location = _db.Locations.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+            // System admin (CompanyId = -1) can access all locations
+            Location location;
+            if (currentUsersCompanyId == -1)
+            {
+                location = _db.Locations.Where(x => x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+            }
+            else
+            {
+                location = _db.Locations.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+            }
 
             if (location != null)
             {
@@ -440,7 +502,16 @@ namespace VacationTracker.Controllers
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            List<Location> locationNameList = _db.Locations.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false).ToList();
+            // System admin (CompanyId = -1) can access all locations
+            List<Location> locationNameList;
+            if (currentUsersCompanyId == -1)
+            {
+                locationNameList = _db.Locations.Where(x => x.IsDeleted == false).ToList();
+            }
+            else
+            {
+                locationNameList = _db.Locations.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false).ToList();
+            }
 
             List<Location> locationNameResults = new();
 
@@ -468,7 +539,16 @@ namespace VacationTracker.Controllers
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            Gender gender = _db.Genders.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+            // System admin (CompanyId = -1) can access all genders
+            Gender gender;
+            if (currentUsersCompanyId == -1)
+            {
+                gender = _db.Genders.Where(x => x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+            }
+            else
+            {
+                gender = _db.Genders.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+            }
 
             if (gender != null)
             {
@@ -495,7 +575,16 @@ namespace VacationTracker.Controllers
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
 
-            List<Gender> genderNameList = _db.Genders.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false).ToList();
+            // System admin (CompanyId = -1) can access all genders
+            List<Gender> genderNameList;
+            if (currentUsersCompanyId == -1)
+            {
+                genderNameList = _db.Genders.Where(x => x.IsDeleted == false).ToList();
+            }
+            else
+            {
+                genderNameList = _db.Genders.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false).ToList();
+            }
 
             List<Gender> genderNameResults = new();
 

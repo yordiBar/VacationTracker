@@ -9,7 +9,7 @@ using VacationTracker.Models;
 
 namespace VacationTracker.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SystemAdmin")]
     public class DepartmentController : Controller
     {
         #region Contructors

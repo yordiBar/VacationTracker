@@ -33,6 +33,13 @@ namespace VacationTracker.Repositories
 
         public async Task<Allowance> GetAllowanceByIdAndCompanyIdAsync(int id, int companyId)
         {
+            // System admin (CompanyId = -1) can access all allowances
+            if (companyId == -1)
+            {
+                return await _db.Allowances
+                    .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+            }
+            
             return await _db.Allowances
                 .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == companyId && !x.IsDeleted);
         }
@@ -40,6 +47,15 @@ namespace VacationTracker.Repositories
         public async Task<IEnumerable<Allowance>> GetAllowancesByCompanyIdAsync(int companyId)
         {
             DateTime dateTime = DateTime.Now;
+            
+            // System admin (CompanyId = -1) can access all allowances
+            if (companyId == -1)
+            {
+                return await _db.Allowances
+                    .Where(x => x.To.Year == dateTime.Year && !x.IsDeleted)
+                    .ToListAsync();
+            }
+            
             return await _db.Allowances
                 .Where(x => x.CompanyId == companyId && x.To.Year == dateTime.Year && !x.IsDeleted)
                 .ToListAsync();

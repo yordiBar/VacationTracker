@@ -6,7 +6,7 @@ using VacationTracker.Models;
 
 namespace VacationTracker.Controllers
 {
-    [Authorize(Roles = "Employee")]
+    [Authorize(Roles = "Employee,SystemAdmin")]
     public class HomeController : Controller
     {
         #region Constructors

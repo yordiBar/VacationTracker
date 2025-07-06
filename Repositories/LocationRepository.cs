@@ -19,6 +19,14 @@ namespace VacationTracker.Repositories
 
         public async Task<IEnumerable<Location>> GetLocationsByCompanyIdAsync(int companyId)
         {
+            // System admin (CompanyId = -1) can access all locations
+            if (companyId == -1)
+            {
+                return await _db.Locations
+                    .Where(x => !x.IsDeleted)
+                    .ToListAsync();
+            }
+            
             return await _db.Locations
                 .Where(x => x.CompanyId == companyId && !x.IsDeleted)
                 .ToListAsync();
@@ -26,6 +34,13 @@ namespace VacationTracker.Repositories
 
         public async Task<Location> GetLocationByIdAndCompanyIdAsync(int id, int companyId)
         {
+            // System admin (CompanyId = -1) can access all locations
+            if (companyId == -1)
+            {
+                return await _db.Locations
+                    .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+            }
+            
             return await _db.Locations
                 .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == companyId && !x.IsDeleted);
         }

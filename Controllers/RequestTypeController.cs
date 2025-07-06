@@ -11,7 +11,7 @@ using VacationTracker.Models;
 
 namespace VacationTracker.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SystemAdmin")]
     public class RequestTypeController : Controller
     {
         #region Constructors
@@ -32,7 +32,18 @@ namespace VacationTracker.Controllers
         public IActionResult Index()
         {
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            IEnumerable<RequestType> requestTypeList = _db.RequestTypes.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            
+            // System admin (CompanyId = -1) can access all request types
+            IEnumerable<RequestType> requestTypeList;
+            if (currentUsersCompanyId == -1)
+            {
+                requestTypeList = _db.RequestTypes.Where(x => x.IsDeleted == false);
+            }
+            else
+            {
+                requestTypeList = _db.RequestTypes.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            }
+            
             return View(requestTypeList);
         }
 
@@ -45,7 +56,17 @@ namespace VacationTracker.Controllers
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-            RequestType requestType = await _db.RequestTypes.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            
+            // System admin (CompanyId = -1) can access all request types
+            RequestType requestType;
+            if (currentUsersCompanyId == -1)
+            {
+                requestType = await _db.RequestTypes.FirstOrDefaultAsync(x => x.Id == id && x.IsDeleted == false);
+            }
+            else
+            {
+                requestType = await _db.RequestTypes.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            }
 
             if (requestType == null)
             {
@@ -111,8 +132,17 @@ namespace VacationTracker.Controllers
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-
-            RequestType requestType = await _db.RequestTypes.FirstOrDefaultAsync(rt => rt.Id == id && rt.CompanyId == currentUsersCompanyId);
+            
+            // System admin (CompanyId = -1) can access all request types
+            RequestType requestType;
+            if (currentUsersCompanyId == -1)
+            {
+                requestType = await _db.RequestTypes.FirstOrDefaultAsync(x => x.Id == id && x.IsDeleted == false);
+            }
+            else
+            {
+                requestType = await _db.RequestTypes.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            }
 
             if (requestType == null)
             {
@@ -161,8 +191,17 @@ namespace VacationTracker.Controllers
             }
 
             int currentUsersCompanyId = User.Identity.GetCompanyId();
-
-            RequestType requestType = await _db.RequestTypes.FirstOrDefaultAsync(rt => rt.Id == id && rt.CompanyId == currentUsersCompanyId);
+            
+            // System admin (CompanyId = -1) can access all request types
+            RequestType requestType;
+            if (currentUsersCompanyId == -1)
+            {
+                requestType = await _db.RequestTypes.FirstOrDefaultAsync(x => x.Id == id && x.IsDeleted == false);
+            }
+            else
+            {
+                requestType = await _db.RequestTypes.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
+            }
 
             if (requestType == null)
             {

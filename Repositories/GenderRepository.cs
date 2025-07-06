@@ -32,12 +32,27 @@ namespace VacationTracker.Repositories
 
         public async Task<Gender> GetGenderByIdAndCompanyIdAsync(int id, int companyId)
         {
+            // System admin (CompanyId = -1) can access all genders
+            if (companyId == -1)
+            {
+                return await _db.Genders
+                    .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+            }
+            
             return await _db.Genders
                 .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == companyId && !x.IsDeleted);
         }
 
         public async Task<IEnumerable<Gender>> GetGendersByCompanyIdAsync(int companyId)
         {
+            // System admin (CompanyId = -1) can access all genders
+            if (companyId == -1)
+            {
+                return await _db.Genders
+                    .Where(x => !x.IsDeleted)
+                    .ToListAsync();
+            }
+            
             return await _db.Genders
                 .Where(x => x.CompanyId == companyId && !x.IsDeleted)
                 .ToListAsync();
