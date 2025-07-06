@@ -37,7 +37,7 @@
                         }
                         @if (User.Identity.IsAuthenticated)
                         {
-                            if (User.IsInRole("Manager"))
+                            if (User.IsInRole("Manager") || User.IsInRole("SystemAdmin"))
                             {
                                 <li class="nav-item nav-link text-dark">Company Settings
                                     <ul>

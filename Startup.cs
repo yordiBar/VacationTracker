@@ -17,6 +17,7 @@ using VacationTracker.Areas.Identity.Interfaces;
 using VacationTracker.Data;
 using VacationTracker.Interfaces;
 using VacationTracker.Repositories;
+using VacationTracker.Services;
 
 namespace VacationTracker
 {
@@ -46,6 +47,9 @@ namespace VacationTracker
             services.AddScoped<IDepartmentRepository, DepartmentRepository>();
             services.AddScoped<IGenderRepository, GenderRepository>();
             services.AddScoped<IAllowanceRepository, AllowanceRepository>();
+            services.AddScoped<ICompanyRepository, CompanyRepository>();
+            services.AddScoped<ICompanyService, CompanyService>();
+            services.AddHttpContextAccessor();
             services.AddSingleton<IRoleSeed, RoleSeed>();
             services.Configure<IdentityOptions>(options =>
             {

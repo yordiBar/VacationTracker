@@ -2,10 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Interfaces;
 using VacationTracker.Models;
+using VacationTracker.Models.DTO;
 
 namespace VacationTracker.Controllers
 {
@@ -14,13 +15,15 @@ namespace VacationTracker.Controllers
     {
         #region Constructors
         private readonly ILocationRepository _locationRepository;
+        private readonly ICompanyService _companyService;
         private readonly ILogger _logger = Log.ForContext<LocationController>();
         #endregion
 
         #region Fields
-        public LocationController(ILocationRepository locationRepository)
+        public LocationController(ILocationRepository locationRepository, ICompanyService companyService)
         {
             _locationRepository = locationRepository;
+            _companyService = companyService;
         }
         #endregion
 
@@ -28,9 +31,25 @@ namespace VacationTracker.Controllers
 
         public async Task<IActionResult> Index()
         {
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+            
+            if (currentUsersCompanyId == 0 && !_companyService.IsSystemAdmin())
+            {
+                _logger.Error("User does not have a valid company ID");
+                return Unauthorized("You do not have access to any company data.");
+            }
+
             IEnumerable<Location> locationList = await _locationRepository.GetLocationsByCompanyIdAsync(currentUsersCompanyId);
-            return View(locationList);
+            
+            var locationDTOs = locationList.Select(location => new LocationDetailsDTO
+            {
+                Id = location.Id,
+                LocationName = location.LocationName,
+                CompanyName = location.Company?.CompanyName ?? "Unknown Company",
+                CompanyId = location.CompanyId
+            }).ToList();
+            
+            return View(locationDTOs);
         }
 
         // GET: Location/Details
@@ -42,7 +61,7 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             Location location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
@@ -51,7 +70,16 @@ namespace VacationTracker.Controllers
                 _logger.Error("Location not found with ID {LocationId}", id);
                 return NotFound();
             }
-            return View(location);
+
+            var locationView = new LocationDetailsDTO
+            {
+                Id = location.Id,
+                LocationName = location.LocationName,
+                CompanyName = location.Company?.CompanyName ?? "Unknown Company",
+                CompanyId = location.CompanyId
+            };
+
+            return View(locationView);
         }
 
         // GET: Location/Create
@@ -72,7 +100,7 @@ namespace VacationTracker.Controllers
                 return View(loc);
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             loc.CompanyId = currentUsersCompanyId;
 
@@ -91,7 +119,7 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             Location location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
@@ -128,7 +156,7 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             Location location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 

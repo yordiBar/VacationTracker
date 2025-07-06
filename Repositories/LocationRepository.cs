@@ -23,11 +23,13 @@ namespace VacationTracker.Repositories
             if (companyId == -1)
             {
                 return await _db.Locations
+                    .Include(l => l.Company)
                     .Where(x => !x.IsDeleted)
                     .ToListAsync();
             }
             
             return await _db.Locations
+                .Include(l => l.Company)
                 .Where(x => x.CompanyId == companyId && !x.IsDeleted)
                 .ToListAsync();
         }
@@ -38,10 +40,12 @@ namespace VacationTracker.Repositories
             if (companyId == -1)
             {
                 return await _db.Locations
+                    .Include(l => l.Company)
                     .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
             }
             
             return await _db.Locations
+                .Include(l => l.Company)
                 .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == companyId && !x.IsDeleted);
         }
 
