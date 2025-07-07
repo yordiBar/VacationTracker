@@ -6,6 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Tests\**" />
+    <Compile Remove="VacationTrackerTests\**" />
+    <Content Remove="Tests\**" />
+    <Content Remove="VacationTrackerTests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <EmbeddedResource Remove="VacationTrackerTests\**" />
+    <None Remove="Tests\**" />
+    <None Remove="VacationTrackerTests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.0" />
