@@ -14,12 +14,12 @@ namespace VacationTracker.Controllers
     [Authorize(Roles = "Admin,SystemAdmin")]
     public class RequestTypeController : Controller
     {
-        #region Constructors
+        #region Fields
         private readonly Data.ApplicationDbContext _db;
         private readonly ILogger<RequestTypeController> _logger;
         #endregion
 
-        #region Fields
+        #region Constructors
         public RequestTypeController(Data.ApplicationDbContext db, ILogger<RequestTypeController> logger)
         {
             _db = db;

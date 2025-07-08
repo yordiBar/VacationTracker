@@ -13,13 +13,13 @@ namespace VacationTracker.Controllers
     [Authorize(Roles = "Admin,SystemAdmin")]
     public class LocationController : Controller
     {
-        #region Constructors
+        #region Fields
         private readonly ILocationRepository _locationRepository;
         private readonly ICompanyService _companyService;
         private readonly ILogger _logger = Log.ForContext<LocationController>();
         #endregion
 
-        #region Fields
+        #region Constructors
         public LocationController(ILocationRepository locationRepository, ICompanyService companyService)
         {
             _locationRepository = locationRepository;

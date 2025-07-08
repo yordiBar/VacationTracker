@@ -12,15 +12,16 @@ namespace VacationTracker.Controllers
     [Authorize(Roles = "Admin,SystemAdmin")]
     public class GenderController : Controller
     {
-        #region Constructors
+        #region Fields
         private readonly IGenderRepository _genderRepository;
         private readonly ILogger _logger = Log.ForContext<GenderController>();
+        #endregion
 
+        #region Constructors
         public GenderController(IGenderRepository genderRepository)
         {
             _genderRepository = genderRepository;
         }
-
         #endregion
 
         #region Actions

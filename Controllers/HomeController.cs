@@ -9,12 +9,12 @@ namespace VacationTracker.Controllers
     [Authorize(Roles = "Employee,SystemAdmin")]
     public class HomeController : Controller
     {
-        #region Constructors
+        #region Fields
         private readonly Data.ApplicationDbContext _db;
         private readonly ILogger<HomeController> _logger;
         #endregion
 
-        #region Fields
+        #region Constructors
         public HomeController(Data.ApplicationDbContext db, ILogger<HomeController> logger)
         {
             _db = db;

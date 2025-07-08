@@ -17,6 +17,7 @@ namespace VacationTracker.Repositories
             _db = db;
         }
 
+        // Index page
         public async Task<IEnumerable<Location>> GetLocationsByCompanyIdAsync(int companyId)
         {
             // System admin (CompanyId = -1) can access all locations
@@ -34,6 +35,7 @@ namespace VacationTracker.Repositories
                 .ToListAsync();
         }
 
+        // Details page
         public async Task<Location> GetLocationByIdAndCompanyIdAsync(int id, int companyId)
         {
             // System admin (CompanyId = -1) can access all locations

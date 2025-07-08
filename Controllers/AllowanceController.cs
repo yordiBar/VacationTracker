@@ -12,12 +12,12 @@ namespace VacationTracker.Controllers
     [Authorize(Roles = "Admin,SystemAdmin")]
     public class AllowanceController : Controller
     {
-        #region Constructors
+        #region Fields
         private readonly IAllowanceRepository _allowanceRepository;
         private readonly ILogger _logger = Log.ForContext<LocationController>();
         #endregion
 
-        #region Fields
+        #region Constructors
         public AllowanceController(IAllowanceRepository allowanceRepository)
         {
             _allowanceRepository = allowanceRepository;

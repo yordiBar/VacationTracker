@@ -13,5 +13,7 @@ namespace VacationTracker.Models
         public int CompanyId { get; set; }
         public string DepartmentCode { get; set; }
         public bool IsDeleted { get; set; }
+
+        public virtual Company Company { get; set; }
     }
 }

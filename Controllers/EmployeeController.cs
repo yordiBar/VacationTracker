@@ -15,12 +15,12 @@ namespace VacationTracker.Controllers
     [Authorize(Roles = "Admin,SystemAdmin")]
     public class EmployeeController : Controller
     {
-        #region Constructors
+        #region Fields
         private readonly Data.ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         #endregion
 
-        #region Fields
+        #region Constructors
         // Creating a connection to the database
         public EmployeeController(Data.ApplicationDbContext db,
             UserManager<ApplicationUser> userManager
