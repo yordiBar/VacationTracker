@@ -35,7 +35,7 @@ namespace VacationTracker.Repositories
                 .ToListAsync();
         }
 
-        // Details page
+        // Details and Edit page
         public async Task<Location> GetLocationByIdAndCompanyIdAsync(int id, int companyId)
         {
             // System admin (CompanyId = -1) can access all locations
