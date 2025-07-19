@@ -12,5 +12,8 @@ namespace VacationTracker.Interfaces
         Task UpdateLocationAsync(Location location);
         Task DeleteLocationAsync(Location location);
         Task<bool> LocationExistsAsync(int id);
+        Task<Location> GetLocationByIdAsync(int id);
+        Task<IEnumerable<Location>> GetAllLocationsAsync();
+        Task<IEnumerable<Location>> SearchLocationsByNameAsync(string name, int companyId);
     }
 }

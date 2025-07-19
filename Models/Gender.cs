@@ -12,5 +12,6 @@ namespace VacationTracker.Models
         public int CompanyId { get; set; }
         public string Name { get; set; }
         public bool IsDeleted { get; set; }
+        public virtual Company Company { get; set; }
     }
 }

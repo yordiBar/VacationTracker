@@ -76,5 +76,37 @@ namespace VacationTracker.Repositories
         {
             return await _db.Locations.AnyAsync(l => l.Id == id);
         }
+
+        // Helper methods for EmployeeController
+        public async Task<Location> GetLocationByIdAsync(int id)
+        {
+            return await _db.Locations
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+        }
+
+        public async Task<IEnumerable<Location>> GetAllLocationsAsync()
+        {
+            return await _db.Locations
+                .Where(x => !x.IsDeleted)
+                .OrderBy(x => x.LocationName)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Location>> SearchLocationsByNameAsync(string name, int companyId)
+        {
+            // System admin (CompanyId = -1) can access all locations
+            if (companyId == -1)
+            {
+                return await _db.Locations
+                    .Where(x => !x.IsDeleted && (string.IsNullOrEmpty(name) || x.LocationName.Contains(name)))
+                    .OrderBy(x => x.LocationName)
+                    .ToListAsync();
+            }
+
+            return await _db.Locations
+                .Where(x => x.CompanyId == companyId && !x.IsDeleted && (string.IsNullOrEmpty(name) || x.LocationName.Contains(name)))
+                .OrderBy(x => x.LocationName)
+                .ToListAsync();
+        }
     }
 }

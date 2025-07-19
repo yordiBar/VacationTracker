@@ -12,5 +12,8 @@ namespace VacationTracker.Interfaces
         Task UpdateDepartmentAsync(Department department);
         Task DeleteDepartmentAsync(Department department);
         Task<bool> DepartementExistsAsync(int id);
+        Task<Department> GetDepartmentByIdAsync(int id);
+        Task<IEnumerable<Department>> GetAllDepartmentsAsync();
+        Task<IEnumerable<Department>> SearchDepartmentsByNameAsync(string name, int companyId);
     }
 }

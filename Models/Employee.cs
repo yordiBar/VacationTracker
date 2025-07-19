@@ -49,6 +49,6 @@ namespace VacationTracker.Models
         public bool Sat { get; set; }
         public bool Sun { get; set; }
 
-        
+        public virtual Company Company { get; set; }
     }
 }

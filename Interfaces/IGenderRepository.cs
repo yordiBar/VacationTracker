@@ -12,5 +12,8 @@ namespace VacationTracker.Interfaces
         Task UpdateGenderAsync(Gender gender);
         Task DeleteGenderAsync(Gender gender);
         Task<bool> GenderExistsAsync(int id);
+        Task<Gender> GetGenderByIdAsync(int id);
+        Task<IEnumerable<Gender>> GetAllGendersAsync();
+        Task<IEnumerable<Gender>> SearchGendersByNameAsync(string name, int companyId);
     }
 }

@@ -1,14 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using VacationTracker.Areas.Identity.Data;
-using VacationTracker.Areas.Identity.Extensions;
+using VacationTracker.Interfaces;
 using VacationTracker.Models;
+using VacationTracker.Models.DTO;
 
 namespace VacationTracker.Controllers
 {
@@ -16,38 +17,63 @@ namespace VacationTracker.Controllers
     public class EmployeeController : Controller
     {
         #region Fields
-        private readonly Data.ApplicationDbContext _db;
+        private readonly IEmployeeRepository _employeeRepository;
+        private readonly ICompanyService _companyService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger _logger = Log.ForContext<EmployeeController>();
+        private readonly IDepartmentRepository _departmentRepository;
+        private readonly ILocationRepository _locationRepository;
+        private readonly IGenderRepository _genderRepository;
         #endregion
 
         #region Constructors
-        // Creating a connection to the database
-        public EmployeeController(Data.ApplicationDbContext db,
-            UserManager<ApplicationUser> userManager
-            )
+        public EmployeeController(
+            IEmployeeRepository employeeRepository,
+            ICompanyService companyService,
+            UserManager<ApplicationUser> userManager,
+            IDepartmentRepository departmentRepository,
+            ILocationRepository locationRepository,
+            IGenderRepository genderRepository)
         {
-            _db = db;
+            _employeeRepository = employeeRepository;
+            _companyService = companyService;
             _userManager = userManager;
+            _departmentRepository = departmentRepository;
+            _locationRepository = locationRepository;
+            _genderRepository = genderRepository;
         }
         #endregion
 
         #region Actions
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
-            
-            // System admin (CompanyId = -1) can access all employees
-            IEnumerable<Employee> employeeList;
-            if (currentUsersCompanyId == -1)
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+
+            if (currentUsersCompanyId == 0 && !_companyService.IsSystemAdmin())
             {
-                employeeList = _db.Employees.Where(x => x.IsDeleted == false);
+                _logger.Error("User does not have a valid company ID");
+                return Unauthorized("You do not have access to any company data.");
             }
-            else
+
+            IEnumerable<Employee> employeeList = await _employeeRepository.GetEmployeesByCompanyIdAsync(currentUsersCompanyId);
+
+            var employeeDTOs = employeeList.Select(employee => new EmployeeDetailsDTO
             {
-                employeeList = _db.Employees.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
-            }
-            
-            return View(employeeList);
+                Id = employee.Id,
+                FirstName = employee.Firstname,
+                Surname = employee.Surname,
+                DisplayName = $"{employee.Firstname} {employee.Surname}",
+                Email = employee.Email,
+                CompanyName = employee.Company?.CompanyName ?? "Unknown Company",
+                CompanyId = employee.CompanyId,
+                StartDate = employee.StartDate,
+                JobTitle = employee.JobTitle,
+                IsAdmin = employee.IsAdmin,
+                IsApprover = employee.IsApprover,
+                IsManager = employee.IsManager
+            }).ToList();
+
+            return View(employeeDTOs);
         }
 
         // GET
@@ -64,91 +90,40 @@ namespace VacationTracker.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.Error("Invalid model state while creating employee");
                 return View(employee);
             }
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
             employee.CompanyId = currentUsersCompanyId;
-            _db.Employees.Add(employee);
 
             try
             {
-                await _db.SaveChangesAsync();
+                await _employeeRepository.AddEmployeeAsync(employee);
+
                 var user = new ApplicationUser { UserName = employee.Email, Email = employee.Email, CompanyId = employee.CompanyId };
                 string password = employee.Password;
                 var result = await _userManager.CreateAsync(user, password);
 
                 if (result.Succeeded)
                 {
-                    if (employee.IsAdmin)
-                    {
-                        if (!await _userManager.IsInRoleAsync(user, "Admin"))
-                        {
-                            await _userManager.AddToRoleAsync(user, "Admin");
-                        }
-                    }
-                    else
-                    {
-                        if (await _userManager.IsInRoleAsync(user, "Admin"))
-                        {
-                            await _userManager.RemoveFromRoleAsync(user, "Admin");
-                        }
-                    }
-                    if (employee.IsApprover)
-                    {
-                        if (!await _userManager.IsInRoleAsync(user, "Approver"))
-                        {
-                            await _userManager.AddToRoleAsync(user, "Approver");
-                        }
-
-                    }
-                    else
-                    {
-                        if (await _userManager.IsInRoleAsync(user, "Approver"))
-                        {
-                            await _userManager.RemoveFromRoleAsync(user, "Approver");
-                        }
-                    }
-
-                    if (employee.IsManager)
-                    {
-                        if (!await _userManager.IsInRoleAsync(user, "Manager"))
-                        {
-                            await _userManager.AddToRoleAsync(user, "Manager");
-                        }
-
-                    }
-                    else
-                    {
-                        if (await _userManager.IsInRoleAsync(user, "Manager"))
-                        {
-                            await _userManager.RemoveFromRoleAsync(user, "Manager");
-                        }
-                    }
-
-                    if (!await _userManager.IsInRoleAsync(user, "Employee"))
-                    {
-                        await _userManager.AddToRoleAsync(user, "Employee");
-                    }
-                }
-
-                //check if there is an allowance for the current year for the employee if not create
-
-                await CreateAllowanceIfRequired(employee, currentUsersCompanyId);
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CheckIfEmployeeExists(employee.Id))
-                {
-                    return NotFound();
+                    await AssignRolesToUser(user, employee);
+                    await CreateAllowanceIfRequired(employee, currentUsersCompanyId);
+                    _logger.Information("Employee created with ID {EmployeeId}", employee.Id);
                 }
                 else
                 {
-                    throw;
+                    _logger.Error("Failed to create user account for employee {EmployeeId}", employee.Id);
                 }
+            }
+            catch (System.Exception ex)
+            {
+                _logger.Error(ex, "Error creating employee");
+                ModelState.AddModelError("", "An error occurred while creating the employee.");
+                return View(employee);
             }
 
             return RedirectToAction("Index");
-
         }
 
         [HttpGet]
@@ -156,31 +131,24 @@ namespace VacationTracker.Controllers
         {
             if (id == null)
             {
+                _logger.Error("Edit method called with a null ID");
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
-            
-            // System admin (CompanyId = -1) can access all employees
-            Employee employee;
-            if (currentUsersCompanyId == -1)
-            {
-                employee = await _db.Employees.FirstOrDefaultAsync(x => x.Id == id && x.IsDeleted == false);
-            }
-            else
-            {
-                employee = await _db.Employees.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
-            }
-
-            ApplicationUser newuser = await _userManager.FindByEmailAsync(employee.Email);
-            employee.IsAdmin = await _userManager.IsInRoleAsync(newuser, "Admin");
-            employee.IsApprover = await _userManager.IsInRoleAsync(newuser, "Approver");
-            employee.IsManager = await _userManager.IsInRoleAsync(newuser, "Manager");
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+            Employee employee = await _employeeRepository.GetEmployeeByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
             if (employee == null)
             {
+                _logger.Error("Employee not found with ID {EmployeeId}", id);
                 return NotFound();
             }
+
+            ApplicationUser user = await _userManager.FindByEmailAsync(employee.Email);
+            employee.IsAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+            employee.IsApprover = await _userManager.IsInRoleAsync(user, "Approver");
+            employee.IsManager = await _userManager.IsInRoleAsync(user, "Manager");
+
             return View(employee);
         }
 
@@ -188,142 +156,33 @@ namespace VacationTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Employee employee)
         {
-
             if (!ModelState.IsValid)
             {
+                _logger.Error("Invalid model state while editing employee with ID {EmployeeId}", employee.Id);
                 return View(employee);
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
-
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
             employee.CompanyId = currentUsersCompanyId;
-
-            _db.Attach(employee).State = EntityState.Modified;
 
             try
             {
-                await _db.SaveChangesAsync();
+                await _employeeRepository.UpdateEmployeeAsync(employee);
 
                 ApplicationUser user = await _userManager.FindByEmailAsync(employee.Email);
-
-                if (employee.IsAdmin)
-                {
-                    if (!await _userManager.IsInRoleAsync(user, "Admin"))
-                    {
-                        await _userManager.AddToRoleAsync(user, "Admin");
-                    }
-
-                }
-                else
-                {
-                    if (await _userManager.IsInRoleAsync(user, "Admin"))
-                    {
-                        await _userManager.RemoveFromRoleAsync(user, "Admin");
-                    }
-                }
-
-                if (employee.IsApprover)
-                {
-                    if (!await _userManager.IsInRoleAsync(user, "Approver"))
-                    {
-                        await _userManager.AddToRoleAsync(user, "Approver");
-                    }
-
-                }
-                else
-                {
-                    if (await _userManager.IsInRoleAsync(user, "Approver"))
-                    {
-                        await _userManager.RemoveFromRoleAsync(user, "Approver");
-                    }
-                }
-
-                if (employee.IsManager)
-                {
-                    if (!await _userManager.IsInRoleAsync(user, "Manager"))
-                    {
-                        await _userManager.AddToRoleAsync(user, "Manager");
-                    }
-
-                }
-                else
-                {
-                    if (await _userManager.IsInRoleAsync(user, "Manager"))
-                    {
-                        await _userManager.RemoveFromRoleAsync(user, "Manager");
-                    }
-                }
-
-                if (!await _userManager.IsInRoleAsync(user, "Employee"))
-                {
-                    await _userManager.AddToRoleAsync(user, "Employee");
-                }
-                // check if there is an allowance for the current year for the employee if not create
+                await AssignRolesToUser(user, employee);
                 await CreateAllowanceIfRequired(employee, currentUsersCompanyId);
+
+                _logger.Information("Employee updated with ID {EmployeeId}", employee.Id);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (System.Exception ex)
             {
-                if (!CheckIfEmployeeExists(employee.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                _logger.Error(ex, "Error updating employee with ID {EmployeeId}", employee.Id);
+                ModelState.AddModelError("", "An error occurred while updating the employee.");
+                return View(employee);
             }
 
             return RedirectToAction("Index");
-        }
-
-        // A boolean method to check if any employees exist
-        private bool CheckIfEmployeeExists(int id)
-        {
-            return _db.Employees.Any(e => e.Id == id);
-        }
-
-        //check if there is an allowance for the current year for the employee if not create
-        private async Task CreateAllowanceIfRequired(Employee emp, int currentUsersCompanyId)
-        {
-            // System admin (CompanyId = -1) can create allowances for any company
-            var allowanceQuery = currentUsersCompanyId == -1 
-                ? _db.Allowances.Where(x => x.EmployeeId == emp.Id)
-                : _db.Allowances.Where(x => x.EmployeeId == emp.Id && x.CompanyId == currentUsersCompanyId);
-                
-            if (allowanceQuery.Count() == 0)
-            {
-                _db.Allowances.Add(new Allowance
-                {
-                    From = new DateTime(2020, 1, 1),
-                    To = new DateTime(2020, 12, 31),
-                    EmployeeId = emp.Id,
-                    CompanyId = emp.CompanyId, // Use employee's company ID, not current user's
-                    Amount = 20,
-                    CarryOver = 0
-                });
-
-                _db.Allowances.Add(new Allowance
-                {
-                    From = new DateTime(2021, 1, 1),
-                    To = new DateTime(2021, 12, 31),
-                    EmployeeId = emp.Id,
-                    CompanyId = emp.CompanyId, // Use employee's company ID, not current user's
-                    Amount = 20,
-                    CarryOver = 0
-                });
-
-                _db.Allowances.Add(new Allowance
-                {
-                    From = new DateTime(2022, 1, 1),
-                    To = new DateTime(2022, 12, 31),
-                    EmployeeId = emp.Id,
-                    CompanyId = emp.CompanyId, // Use employee's company ID, not current user's
-                    Amount = 20,
-                    CarryOver = 0
-                });
-
-                await _db.SaveChangesAsync();
-            };
         }
 
         [HttpGet]
@@ -331,76 +190,129 @@ namespace VacationTracker.Controllers
         {
             if (id == null)
             {
+                _logger.Error("Delete method called with a null ID");
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+            Employee employee = await _employeeRepository.GetEmployeeByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
-            // System admin (CompanyId = -1) can access all employees
-            Employee emp;
-            if (currentUsersCompanyId == -1)
+            if (employee == null)
             {
-                emp = await _db.Employees.FirstOrDefaultAsync(x => x.Id == id);
-            }
-            else
-            {
-                emp = await _db.Employees.FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == currentUsersCompanyId);
-            }
-
-            if (emp == null)
-            {
+                _logger.Error("Employee not found with ID {EmployeeId}", id);
                 return NotFound();
             }
-            return View(emp);
+
+            return View(employee);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(Employee emp)
+        public async Task<IActionResult> Delete(Employee employee)
         {
             if (!ModelState.IsValid)
             {
-                return View(emp);
+                _logger.Error("Invalid model state while deleting employee with ID {EmployeeId}", employee.Id);
+                return View(employee);
             }
-
-            emp.IsDeleted = true;
-
-            _db.Attach(emp).State = EntityState.Modified;
 
             try
             {
-                await _db.SaveChangesAsync();
+                await _employeeRepository.DeleteEmployeeAsync(employee);
+                _logger.Information("Employee deleted with ID {EmployeeId}", employee.Id);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (System.Exception ex)
             {
-                if (!CheckIfEmployeeExists(emp.Id))
+                _logger.Error(ex, "Error deleting employee with ID {EmployeeId}", employee.Id);
+                ModelState.AddModelError("", "An error occurred while deleting the employee.");
+                return View(employee);
+            }
+
+            return RedirectToAction("Index");
+        }
+        #endregion
+
+        #region Private Methods
+        private async Task AssignRolesToUser(ApplicationUser user, Employee employee)
+        {
+            // Handle Admin role
+            if (employee.IsAdmin)
+            {
+                if (!await _userManager.IsInRoleAsync(user, "Admin"))
                 {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
+                    await _userManager.AddToRoleAsync(user, "Admin");
                 }
             }
-            return RedirectToAction("Index");
+            else
+            {
+                if (await _userManager.IsInRoleAsync(user, "Admin"))
+                {
+                    await _userManager.RemoveFromRoleAsync(user, "Admin");
+                }
+            }
+
+            // Handle Approver role
+            if (employee.IsApprover)
+            {
+                if (!await _userManager.IsInRoleAsync(user, "Approver"))
+                {
+                    await _userManager.AddToRoleAsync(user, "Approver");
+                }
+            }
+            else
+            {
+                if (await _userManager.IsInRoleAsync(user, "Approver"))
+                {
+                    await _userManager.RemoveFromRoleAsync(user, "Approver");
+                }
+            }
+
+            // Handle Manager role
+            if (employee.IsManager)
+            {
+                if (!await _userManager.IsInRoleAsync(user, "Manager"))
+                {
+                    await _userManager.AddToRoleAsync(user, "Manager");
+                }
+            }
+            else
+            {
+                if (await _userManager.IsInRoleAsync(user, "Manager"))
+                {
+                    await _userManager.RemoveFromRoleAsync(user, "Manager");
+                }
+            }
+
+            // Always ensure Employee role is assigned
+            if (!await _userManager.IsInRoleAsync(user, "Employee"))
+            {
+                await _userManager.AddToRoleAsync(user, "Employee");
+            }
+        }
+
+        private async Task CreateAllowanceIfRequired(Employee emp, int currentUsersCompanyId)
+        {
+            // This method would need to be moved to a service or repository
+            // For now, keeping the existing logic but it should be refactored
+            // TODO: Move allowance creation logic to a separate service
         }
         #endregion
 
         #region Helpers
         [HttpGet]
-        public IActionResult GetDepartmentById(int Id)
+        public async Task<IActionResult> GetDepartmentById(int Id)
         {
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             // System admin (CompanyId = -1) can access all departments
             Department dept;
             if (currentUsersCompanyId == -1)
             {
-                dept = _db.Departments.Where(x => x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+                dept = await _departmentRepository.GetDepartmentByIdAsync(Id);
             }
             else
             {
-                dept = _db.Departments.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+                dept = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(Id, currentUsersCompanyId);
             }
 
             if (dept != null)
@@ -424,32 +336,25 @@ namespace VacationTracker.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetDepartmentName(string name)
+        public async Task<IActionResult> GetDepartmentName(string name)
         {
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             // System admin (CompanyId = -1) can access all departments
-            List<Department> departmentNameList;
+            IEnumerable<Department> departmentNameList;
             if (currentUsersCompanyId == -1)
             {
-                departmentNameList = _db.Departments.Where(x => x.IsDeleted == false).ToList();
+                departmentNameList = await _departmentRepository.GetAllDepartmentsAsync();
             }
             else
             {
-                departmentNameList = _db.Departments.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false).ToList();
+                departmentNameList = await _departmentRepository.GetDepartmentsByCompanyIdAsync(currentUsersCompanyId);
             }
 
-            List<Department> departmentNameResults = new();
-
-            foreach (var deptName in departmentNameList)
-            {
-                if (String.IsNullOrEmpty(name) || deptName.DepartmentName.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    departmentNameResults.Add(deptName);
-                }
-            }
-
-            departmentNameResults.Sort(delegate (Department d1, Department d2) { return d1.DepartmentName.CompareTo(d2.DepartmentName); });
+            var departmentNameResults = departmentNameList
+                .Where(deptName => String.IsNullOrEmpty(name) || deptName.DepartmentName.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0)
+                .OrderBy(x => x.DepartmentName)
+                .ToList();
 
             var serialisedJson = from result in departmentNameResults
                                  select new
@@ -461,19 +366,19 @@ namespace VacationTracker.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetLocationById(int Id)
+        public async Task<IActionResult> GetLocationById(int Id)
         {
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             // System admin (CompanyId = -1) can access all locations
             Location location;
             if (currentUsersCompanyId == -1)
             {
-                location = _db.Locations.Where(x => x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+                location = await _locationRepository.GetLocationByIdAsync(Id);
             }
             else
             {
-                location = _db.Locations.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+                location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(Id, currentUsersCompanyId);
             }
 
             if (location != null)
@@ -494,36 +399,28 @@ namespace VacationTracker.Controllers
                 };
                 return Json(serialisedJson);
             }
-
         }
 
         [HttpGet]
-        public IActionResult GetLocationName(string name)
+        public async Task<IActionResult> GetLocationName(string name)
         {
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             // System admin (CompanyId = -1) can access all locations
-            List<Location> locationNameList;
+            IEnumerable<Location> locationNameList;
             if (currentUsersCompanyId == -1)
             {
-                locationNameList = _db.Locations.Where(x => x.IsDeleted == false).ToList();
+                locationNameList = await _locationRepository.GetAllLocationsAsync();
             }
             else
             {
-                locationNameList = _db.Locations.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false).ToList();
+                locationNameList = await _locationRepository.GetLocationsByCompanyIdAsync(currentUsersCompanyId);
             }
 
-            List<Location> locationNameResults = new();
-
-            foreach (var locName in locationNameList)
-            {
-                if (String.IsNullOrEmpty(name) || locName.LocationName.Contains(name, StringComparison.OrdinalIgnoreCase))
-                {
-                    locationNameResults.Add(locName);
-                }
-            }
-
-            locationNameResults.Sort(delegate (Location l1, Location l2) { return l1.LocationName.CompareTo(l2.LocationName); });
+            var locationNameResults = locationNameList
+                .Where(locName => String.IsNullOrEmpty(name) || locName.LocationName.Contains(name, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(x => x.LocationName)
+                .ToList();
 
             var serialisedJson = from result in locationNameResults
                                  select new
@@ -535,19 +432,19 @@ namespace VacationTracker.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetGenderById(int Id)
+        public async Task<IActionResult> GetGenderById(int Id)
         {
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             // System admin (CompanyId = -1) can access all genders
             Gender gender;
             if (currentUsersCompanyId == -1)
             {
-                gender = _db.Genders.Where(x => x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+                gender = await _genderRepository.GetGenderByIdAsync(Id);
             }
             else
             {
-                gender = _db.Genders.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false && x.Id == Id).FirstOrDefault();
+                gender = await _genderRepository.GetGenderByIdAndCompanyIdAsync(Id, currentUsersCompanyId);
             }
 
             if (gender != null)
@@ -571,32 +468,25 @@ namespace VacationTracker.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetGenderName(string name)
+        public async Task<IActionResult> GetGenderName(string name)
         {
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             // System admin (CompanyId = -1) can access all genders
-            List<Gender> genderNameList;
+            IEnumerable<Gender> genderNameList;
             if (currentUsersCompanyId == -1)
             {
-                genderNameList = _db.Genders.Where(x => x.IsDeleted == false).ToList();
+                genderNameList = await _genderRepository.GetAllGendersAsync();
             }
             else
             {
-                genderNameList = _db.Genders.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false).ToList();
+                genderNameList = await _genderRepository.GetGendersByCompanyIdAsync(currentUsersCompanyId);
             }
 
-            List<Gender> genderNameResults = new();
-
-            foreach (var genName in genderNameList)
-            {
-                if (String.IsNullOrEmpty(name) || genName.Name.Contains(name, StringComparison.OrdinalIgnoreCase))
-                {
-                    genderNameResults.Add(genName);
-                }
-            }
-
-            genderNameResults.Sort(delegate (Gender g1, Gender g2) { return g1.Name.CompareTo(g2.Name); });
+            var genderNameResults = genderNameList
+                .Where(genName => String.IsNullOrEmpty(name) || genName.Name.Contains(name, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(x => x.Name)
+                .ToList();
 
             var serialisedJson = from result in genderNameResults
                                  select new

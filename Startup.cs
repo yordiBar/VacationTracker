@@ -49,6 +49,7 @@ namespace VacationTracker
             services.AddScoped<IAllowanceRepository, AllowanceRepository>();
             services.AddScoped<ICompanyRepository, CompanyRepository>();
             services.AddScoped<ICompanyService, CompanyService>();
+            services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             services.AddHttpContextAccessor();
             services.AddSingleton<IRoleSeed, RoleSeed>();
             services.Configure<IdentityOptions>(options =>

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<VacationTracker.Models.Employee>
+﻿@model IEnumerable<VacationTracker.Models.DTO.EmployeeDetailsDTO>
 @{
     ViewData["Title"] = "Index";
 }
@@ -17,6 +17,9 @@
                     Display Name
                 </th>
                 <th>
+                    Company
+                </th>
+                <th>
                     Start Date
                 </th>
                 <th>
@@ -26,21 +29,24 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var employee in Model)
+            @foreach (var item in Model)
             {
                 <tr>
                     <td>
-                        @employee.DisplayName
+                        @item.DisplayName
                     </td>
                     <td>
-                        @employee.DisplayStartDate
+                        @Html.DisplayFor(modelItem => item.CompanyName)
                     </td>
                     <td>
-                        @employee.JobTitle
+                        @Html.DisplayFor(modelItem => item.DisplayStartDate)
                     </td>
                     <td>
-                        <a asp-controller="Employee" asp-action="Edit" asp-route-id="@employee.Id" class="btn btn-dark">Edit</a> |
-                        <a asp-controller="Employee" asp-action="Delete" asp-route-id="@employee.Id" class="btn btn-danger">Delete</a>
+                        @Html.DisplayFor(modelItem => item.JobTitle)
+                    </td>
+                    <td>
+                        <a asp-controller="Employee" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-dark">Edit</a> |
+                        <a asp-controller="Employee" asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger">Delete</a>
                     </td>
                 </tr>
             }

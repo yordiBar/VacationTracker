@@ -11,15 +11,57 @@ namespace VacationTracker.Repositories
     public class GenderRepository : IGenderRepository
     {
         private readonly ApplicationDbContext _db;
+
         public GenderRepository(ApplicationDbContext db)
         {
             _db = db;
         }
+
+        // Index page
+        public async Task<IEnumerable<Gender>> GetGendersByCompanyIdAsync(int companyId)
+        {
+            // System admin (CompanyId = -1) can access all genders
+            if (companyId == -1)
+            {
+                return await _db.Genders
+                    .Include(g => g.Company)
+                    .Where(x => !x.IsDeleted)
+                    .ToListAsync();
+            }
+            
+            return await _db.Genders
+                .Include(g => g.Company)
+                .Where(x => x.CompanyId == companyId && !x.IsDeleted)
+                .ToListAsync();
+        }
+
+        // Details and Edit page
+        public async Task<Gender> GetGenderByIdAndCompanyIdAsync(int id, int companyId)
+        {
+            // System admin (CompanyId = -1) can access all genders
+            if (companyId == -1)
+            {
+                return await _db.Genders
+                    .Include(g => g.Company)
+                    .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+            }
+            
+            return await _db.Genders
+                .Include(g => g.Company)
+                .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == companyId && !x.IsDeleted);
+        }
+
         public async Task<Gender> AddGenderAsync(Gender gender)
         {
             _db.Genders.Add(gender);
             await _db.SaveChangesAsync();
             return gender;
+        }
+
+        public async Task UpdateGenderAsync(Gender gender)
+        {
+            _db.Attach(gender).State = EntityState.Modified;
+            await _db.SaveChangesAsync();
         }
 
         public async Task DeleteGenderAsync(Gender gender)
@@ -30,42 +72,41 @@ namespace VacationTracker.Repositories
             await _db.SaveChangesAsync();
         }
 
-        public async Task<Gender> GetGenderByIdAndCompanyIdAsync(int id, int companyId)
+        public async Task<bool> GenderExistsAsync(int id)
         {
-            // System admin (CompanyId = -1) can access all genders
-            if (companyId == -1)
-            {
-                return await _db.Genders
-                    .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
-            }
-            
-            return await _db.Genders
-                .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == companyId && !x.IsDeleted);
+            return await _db.Genders.AnyAsync(g => g.Id == id);
         }
 
-        public async Task<IEnumerable<Gender>> GetGendersByCompanyIdAsync(int companyId)
+        // Helper methods for EmployeeController
+        public async Task<Gender> GetGenderByIdAsync(int id)
         {
-            // System admin (CompanyId = -1) can access all genders
-            if (companyId == -1)
-            {
-                return await _db.Genders
-                    .Where(x => !x.IsDeleted)
-                    .ToListAsync();
-            }
-            
             return await _db.Genders
-                .Where(x => x.CompanyId == companyId && !x.IsDeleted)
+                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+        }
+
+        public async Task<IEnumerable<Gender>> GetAllGendersAsync()
+        {
+            return await _db.Genders
+                .Where(x => !x.IsDeleted)
+                .OrderBy(x => x.Name)
                 .ToListAsync();
         }
 
-        public async Task UpdateGenderAsync(Gender gender)
+        public async Task<IEnumerable<Gender>> SearchGendersByNameAsync(string name, int companyId)
         {
-            _db.Attach(gender).State = EntityState.Modified;
-            await _db.SaveChangesAsync();
-        }
-        public async Task<bool> GenderExistsAsync(int id)
-        {
-            return await _db.Genders.AnyAsync(x => x.Id == id);
+            // System admin (CompanyId = -1) can access all genders
+            if (companyId == -1)
+            {
+                return await _db.Genders
+                    .Where(x => !x.IsDeleted && (string.IsNullOrEmpty(name) || x.Name.Contains(name)))
+                    .OrderBy(x => x.Name)
+                    .ToListAsync();
+            }
+
+            return await _db.Genders
+                .Where(x => x.CompanyId == companyId && !x.IsDeleted && (string.IsNullOrEmpty(name) || x.Name.Contains(name)))
+                .OrderBy(x => x.Name)
+                .ToListAsync();
         }
     }
 }
