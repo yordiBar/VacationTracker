@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,31 +26,54 @@ namespace VacationTracker.Controllers
             _locationRepository = locationRepository;
             _companyService = companyService;
         }
+
+
         #endregion
 
         #region Actions
 
+        [HttpGet]
+        public IActionResult Test()
+        {
+            return Content("LocationController.Test() reached successfully! Dependencies: " + 
+                          (_locationRepository != null ? "Repository OK" : "Repository NULL") + ", " +
+                          (_companyService != null ? "Service OK" : "Service NULL"));
+        }
+
         public async Task<IActionResult> Index()
         {
-            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
-            
-            if (currentUsersCompanyId == 0 && !_companyService.IsSystemAdmin())
+            try
             {
-                _logger.Error("User does not have a valid company ID");
-                return Unauthorized("You do not have access to any company data.");
-            }
+                int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+                
+                _logger.Information("Current user company ID: {CompanyId}", currentUsersCompanyId);
+                
+                if (currentUsersCompanyId == 0 && !_companyService.IsSystemAdmin())
+                {
+                    _logger.Error("User does not have a valid company ID");
+                    return Unauthorized("You do not have access to any company data.");
+                }
 
-            IEnumerable<Location> locationList = await _locationRepository.GetLocationsByCompanyIdAsync(currentUsersCompanyId);
+                _logger.Information("Fetching locations for company ID: {CompanyId}", currentUsersCompanyId);
+                IEnumerable<Location> locationList = await _locationRepository.GetLocationsByCompanyIdAsync(currentUsersCompanyId);
             
-            var locationDTOs = locationList.Select(location => new LocationDetailsDTO
+                            var locationDTOs = locationList.Select(location => new LocationDetailsDTO
+                {
+                    Id = location.Id,
+                    LocationName = location.LocationName,
+                    CompanyName = location.Company?.CompanyName ?? "Unknown Company",
+                    CompanyId = location.CompanyId
+                }).ToList();
+                
+                _logger.Information("Returning {Count} locations", locationDTOs.Count);
+                return View(locationDTOs);
+            }
+            catch (Exception ex)
             {
-                Id = location.Id,
-                LocationName = location.LocationName,
-                CompanyName = location.Company?.CompanyName ?? "Unknown Company",
-                CompanyId = location.CompanyId
-            }).ToList();
-            
-            return View(locationDTOs);
+                _logger.Error(ex, "Error in LocationController.Index for company ID: {CompanyId}", 
+                    _companyService.GetCurrentUserCompanyId());
+                throw;
+            }
         }
 
         // GET: Location/Details

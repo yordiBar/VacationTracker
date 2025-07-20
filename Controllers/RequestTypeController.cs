@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-using VacationTracker.Areas.Identity.Extensions;
+using VacationTracker.Interfaces;
 using VacationTracker.Models;
 
 namespace VacationTracker.Controllers
@@ -17,13 +17,15 @@ namespace VacationTracker.Controllers
         #region Fields
         private readonly Data.ApplicationDbContext _db;
         private readonly ILogger<RequestTypeController> _logger;
+        private readonly ICompanyService _companyService;
         #endregion
 
         #region Constructors
-        public RequestTypeController(Data.ApplicationDbContext db, ILogger<RequestTypeController> logger)
+        public RequestTypeController(Data.ApplicationDbContext db, ILogger<RequestTypeController> logger, ICompanyService companyService)
         {
             _db = db;
             _logger = logger;
+            _companyService = companyService;
         }
         #endregion
 
@@ -31,8 +33,8 @@ namespace VacationTracker.Controllers
         // GET: RequestTypeController
         public IActionResult Index()
         {
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
-            
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+
             // System admin (CompanyId = -1) can access all request types
             IEnumerable<RequestType> requestTypeList;
             if (currentUsersCompanyId == -1)
@@ -43,7 +45,7 @@ namespace VacationTracker.Controllers
             {
                 requestTypeList = _db.RequestTypes.Where(x => x.CompanyId == currentUsersCompanyId && x.IsDeleted == false);
             }
-            
+
             return View(requestTypeList);
         }
 
@@ -55,8 +57,8 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
-            
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+
             // System admin (CompanyId = -1) can access all request types
             RequestType requestType;
             if (currentUsersCompanyId == -1)
@@ -97,7 +99,7 @@ namespace VacationTracker.Controllers
                 return View(requestType);
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
             requestType.CompanyId = currentUsersCompanyId;
             _db.RequestTypes.Add(requestType);
 
@@ -131,8 +133,8 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
-            
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+
             // System admin (CompanyId = -1) can access all request types
             RequestType requestType;
             if (currentUsersCompanyId == -1)
@@ -190,8 +192,8 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
-            
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+
             // System admin (CompanyId = -1) can access all request types
             RequestType requestType;
             if (currentUsersCompanyId == -1)

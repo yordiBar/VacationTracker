@@ -56,8 +56,19 @@ namespace VacationTracker.Areas.SystemAdmin.Controllers
                 return NotFound();
             }
 
+            // Ensure the company database exists
+            try
+            {
+                await CreateCompanyDatabase(company);
+                _logger.LogInformation("Company database verified/created: {DatabaseName}", company.DatabaseName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating/verifying company database: {DatabaseName}", company.DatabaseName);
+            }
+
             // Set session to indicate system admin mode for this company
-            HttpContext.Session.SetInt32("SystemAdminCompanyId", companyId);
+            HttpContext.Session.SetInt32("CurrentCompanyId", companyId);
             HttpContext.Session.SetString("SystemAdminMode", "true");
 
             _logger.LogInformation("System admin logged into company {CompanyName} (ID: {CompanyId})",
@@ -102,7 +113,6 @@ namespace VacationTracker.Areas.SystemAdmin.Controllers
                 .Replace("*/", "")
                 .ToUpper();
             
-            // Ensure database name starts with a letter (SQL requirement)
             if (!char.IsLetter(sanitizedCompanyName[0]))
             {
                 sanitizedCompanyName = "C" + sanitizedCompanyName;
@@ -136,6 +146,18 @@ namespace VacationTracker.Areas.SystemAdmin.Controllers
                 ModelState.AddModelError("", "An error occurred while creating the company. Please try again.");
                 return View(company);
             }
+        }
+
+        [HttpGet]
+        public IActionResult ExitCompanyMode()
+        {
+            // Clear the session variables to exit company mode
+            HttpContext.Session.Remove("CurrentCompanyId");
+            HttpContext.Session.Remove("SystemAdminMode");
+
+            _logger.LogInformation("System admin exited company mode");
+
+            return RedirectToAction("Index", "Admin", new { area = "SystemAdmin" });
         }
 
         private async Task CreateCompanyDatabase(Company company)

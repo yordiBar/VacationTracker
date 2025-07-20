@@ -27,6 +27,7 @@ namespace VacationTracker.SystemAdmin.Services
             if (company == null)
                 throw new InvalidOperationException($"Company with ID {companyId} not found or inactive");
 
+            Console.WriteLine($"Creating DbContext for company: {company.CompanyName}, Database: {company.DatabaseName}");
             return CreateDbContext(company.DatabaseName);
         }
 
@@ -40,6 +41,8 @@ namespace VacationTracker.SystemAdmin.Services
             if (string.IsNullOrEmpty(connectionString))
                 throw new InvalidOperationException($"Database {databaseName} not found or inactive");
 
+            Console.WriteLine($"Creating DbContext with connection string: {connectionString}");
+            
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
             optionsBuilder.UseSqlServer(connectionString);
 

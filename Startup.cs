@@ -51,8 +51,73 @@ namespace VacationTracker
             services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, MyUserClaimsPrincipalFactory>();
             services.AddControllersWithViews();
 
-            services.AddScoped<ILocationRepository, LocationRepository>();
-            services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+            services.AddScoped<ILocationRepository>(provider => 
+            {
+                var companyService = provider.GetService<ICompanyService>();
+                if (companyService == null)
+                {
+                    var dbContext = provider.GetService<ApplicationDbContext>();
+                    return new LocationRepository(dbContext);
+                }
+
+                var companyId = companyService.GetCurrentUserCompanyId();
+                
+                if (companyService.IsSystemAdmin() && companyId != -1)
+                {
+                    var dbContextFactory = provider.GetService<ICompanyDbContextFactory>();
+                    if (dbContextFactory != null)
+                    {
+                        try
+                        {
+                            var dbContext = dbContextFactory.CreateDbContext(companyId);
+                            return new LocationRepository(dbContext);
+                        }
+                        catch
+                        {
+                            var dbContext = provider.GetService<ApplicationDbContext>();
+                            return new LocationRepository(dbContext);
+                        }
+                    }
+                }
+                
+                var defaultDbContext = provider.GetService<ApplicationDbContext>();
+                return new LocationRepository(defaultDbContext);
+            });
+            
+            services.AddScoped<IDepartmentRepository>(provider => 
+            {
+                var companyService = provider.GetService<ICompanyService>();
+                if (companyService == null)
+                {
+                    var dbContext = provider.GetService<ApplicationDbContext>();
+                    return new DepartmentRepository(dbContext);
+                }
+
+                var companyId = companyService.GetCurrentUserCompanyId();
+                
+                if (companyService.IsSystemAdmin() && companyId != -1)
+                {
+                    var dbContextFactory = provider.GetService<ICompanyDbContextFactory>();
+                    if (dbContextFactory != null)
+                    {
+                        try
+                        {
+                            var dbContext = dbContextFactory.CreateDbContext(companyId);
+                            return new DepartmentRepository(dbContext);
+                        }
+                        catch
+                        {
+                            var dbContext = provider.GetService<ApplicationDbContext>();
+                            return new DepartmentRepository(dbContext);
+                        }
+                    }
+                }
+                
+                // Regular user or SystemAdmin in main area - use default database
+                var defaultDbContext = provider.GetService<ApplicationDbContext>();
+                return new DepartmentRepository(defaultDbContext);
+            });
+            
             services.AddScoped<IGenderRepository, GenderRepository>();
             services.AddScoped<IAllowanceRepository, AllowanceRepository>();
             services.AddScoped<ICompanyRepository, CompanyRepository>();            

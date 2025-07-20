@@ -1,4 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Http
 @using VacationTracker.Areas.Identity.Data;
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
@@ -39,9 +40,42 @@
                         {
                             if (User.IsInRole("SystemAdmin"))
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="SystemAdmin" asp-controller="Admin" asp-action="Index">System Admin</a>
-                                </li>
+                                @if (Context.Session.GetString("SystemAdminMode") == "true")
+                                {
+                                    // SystemAdmin is logged into a specific company - show company navigation
+                                    <li class="nav-item">
+                                        <a class="nav-link text-warning" asp-area="SystemAdmin" asp-controller="Admin" asp-action="ExitCompanyMode">Exit Company Mode</a>
+                                    </li>
+                                    <li class="nav-item nav-link text-dark">Company Settings
+                                        <ul>
+                                            <li>
+                                                <a class="nav-link text-dark" asp-area="" asp-controller="Employee" asp-action="Index">List of Employees</a>
+                                            </li>
+                                            <li>
+                                                <a class="nav-link text-dark" asp-area="" asp-controller="Department" asp-action="Index">Departments</a>
+                                            </li>
+                                            <li>
+                                                <a class="nav-link text-dark" asp-area="" asp-controller="Location" asp-action="Index">Locations</a>
+                                            </li>
+                                            <li>
+                                                <a class="nav-link text-dark" asp-area="" asp-controller="Gender" asp-action="Index">Genders</a>
+                                            </li>
+                                            <li>
+                                                <a class="nav-link text-dark" asp-area="" asp-controller="RequestType" asp-action="Index">Request Types</a>
+                                            </li>
+                                            <li>
+                                                <a class="nav-link text-dark" asp-area="" asp-controller="Allowance" asp-action="Index">Allowances</a>
+                                            </li>
+                                        </ul>                
+                                    </li>
+                                }
+                                else
+                                {
+                                    // SystemAdmin is in the main SystemAdmin area - show only System Admin link
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="SystemAdmin" asp-controller="Admin" asp-action="Index">System Admin</a>
+                                    </li>
+                                }
                             }
                             else if (User.IsInRole("Manager") || User.IsInRole("Admin"))
                             {

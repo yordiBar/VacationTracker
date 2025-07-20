@@ -34,7 +34,7 @@ namespace VacationTracker.Controllers
         // GET: Department/Details
         public async Task<IActionResult> Index()
         {
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
             if (currentUsersCompanyId == 0 && !_companyService.IsSystemAdmin())
             {
                 _logger.Error("User does not have a valid company ID");
@@ -62,7 +62,7 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             Department department = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
@@ -101,7 +101,7 @@ namespace VacationTracker.Controllers
                 return View(dept);
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             dept.CompanyId = currentUsersCompanyId;
 
@@ -120,7 +120,7 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             Department department = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 
@@ -158,7 +158,7 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             Department department = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
 

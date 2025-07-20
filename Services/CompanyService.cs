@@ -37,12 +37,26 @@ namespace VacationTracker.Services
 
         public int GetCurrentUserCompanyId()
         {
-            var company = _companySelectionService.GetCurrentCompanyAsync().Result;
-            return company?.Id ?? 0;
+            // If in SystemAdmin mode, use the selected company from session
+            if (_companySelectionService.IsSystemAdminMode())
+            {
+                var selectedCompany = _companySelectionService.GetCurrentCompanyAsync().Result;
+                return selectedCompany?.Id ?? 0;
+            }
+
+            // Otherwise, use the user's own company ID
+            var userCompany = _companySelectionService.GetCurrentCompanyAsync().Result;
+            return userCompany?.Id ?? 0;
         }
 
         public bool IsSystemAdmin()
         {
+            // If in SystemAdmin mode but logged into a specific company, don't show SystemAdmin features
+            if (_companySelectionService.IsSystemAdminMode())
+            {
+                return false;
+            }
+
             var companyId = GetCurrentUserCompanyId();
             return companyId == -1; // System admin has CompanyId = -1
         }

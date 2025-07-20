@@ -8,5 +8,6 @@ namespace VacationTracker.SystemAdmin.Services.Interfaces
         Task<Company> GetCurrentCompanyAsync();
         Task SetCurrentCompanyAsync(int companyId);
         Task<bool> HasAccessToCompanyAsync(int companyId);
+        bool IsSystemAdminMode();
     }
 }

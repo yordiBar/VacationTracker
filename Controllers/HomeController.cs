@@ -38,6 +38,12 @@ namespace VacationTracker.Controllers
             return View();
         }
 
+        [HttpGet]
+        public IActionResult Test()
+        {
+            return Content("HomeController.Test() reached successfully!");
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

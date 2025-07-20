@@ -29,6 +29,11 @@ namespace VacationTracker.SystemAdmin.Services
                 .FirstOrDefaultAsync(c => c.Id == companyId.Value && c.IsActive);
         }
 
+        public bool IsSystemAdminMode()
+        {
+            return _httpContextAccessor.HttpContext?.Session.GetString("SystemAdminMode") == "true";
+        }
+
         public async Task SetCurrentCompanyAsync(int companyId)
         {
             var company = await _masterDbContext.Companies
