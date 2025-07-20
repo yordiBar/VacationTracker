@@ -108,7 +108,7 @@ namespace VacationTracker.Controllers
                 if (result.Succeeded)
                 {
                     await AssignRolesToUser(user, employee);
-                    await CreateAllowanceIfRequired(employee, currentUsersCompanyId);
+                    CreateAllowanceIfRequired(employee, currentUsersCompanyId);
                     _logger.Information("Employee created with ID {EmployeeId}", employee.Id);
                 }
                 else
@@ -171,7 +171,7 @@ namespace VacationTracker.Controllers
 
                 ApplicationUser user = await _userManager.FindByEmailAsync(employee.Email);
                 await AssignRolesToUser(user, employee);
-                await CreateAllowanceIfRequired(employee, currentUsersCompanyId);
+                CreateAllowanceIfRequired(employee, currentUsersCompanyId);
 
                 _logger.Information("Employee updated with ID {EmployeeId}", employee.Id);
             }
@@ -290,11 +290,12 @@ namespace VacationTracker.Controllers
             }
         }
 
-        private async Task CreateAllowanceIfRequired(Employee emp, int currentUsersCompanyId)
+        private Task CreateAllowanceIfRequired(Employee emp, int currentUsersCompanyId)
         {
             // This method would need to be moved to a service or repository
             // For now, keeping the existing logic but it should be refactored
             // TODO: Move allowance creation logic to a separate service
+            return Task.CompletedTask;
         }
         #endregion
 

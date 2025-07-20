@@ -17,5 +17,7 @@ namespace VacationTracker.Areas.Identity.Data
         }
         public string ContactName { get; set; }
         public int CompanyId { get; set; }
+        public bool IsActive { get; set; } = true;
+        public bool IsSystemAdmin => CompanyId == -1;
     }
 }

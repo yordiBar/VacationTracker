@@ -18,6 +18,9 @@ using VacationTracker.Data;
 using VacationTracker.Interfaces;
 using VacationTracker.Repositories;
 using VacationTracker.Services;
+using VacationTracker.SystemAdmin.Data;
+using VacationTracker.SystemAdmin.Services;
+using VacationTracker.SystemAdmin.Services.Interfaces;
 
 namespace VacationTracker
 {
@@ -36,6 +39,10 @@ namespace VacationTracker
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<MasterDbContext>(options =>
+                options.UseSqlServer(
+                    Configuration.GetConnectionString("MasterConnection")));
+
             services.AddDatabaseDeveloperPageExceptionFilter();
 
             services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
@@ -43,13 +50,29 @@ namespace VacationTracker
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, MyUserClaimsPrincipalFactory>();
             services.AddControllersWithViews();
+
             services.AddScoped<ILocationRepository, LocationRepository>();
             services.AddScoped<IDepartmentRepository, DepartmentRepository>();
             services.AddScoped<IGenderRepository, GenderRepository>();
             services.AddScoped<IAllowanceRepository, AllowanceRepository>();
-            services.AddScoped<ICompanyRepository, CompanyRepository>();
-            services.AddScoped<ICompanyService, CompanyService>();
+            services.AddScoped<ICompanyRepository, CompanyRepository>();            
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+
+            // SystemAdmin services
+            services.AddScoped<ICompanySelectionService, CompanySelectionService>();
+            services.AddScoped<ICompanyDbContextFactory, CompanyDbContextFactory>();
+
+            services.AddScoped<ICompanyService, CompanyService>();
+
+            services.AddScoped<ISystemAdminSeedService, SystemAdminSeedService>();
+
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+
             services.AddHttpContextAccessor();
             services.AddSingleton<IRoleSeed, RoleSeed>();
             services.Configure<IdentityOptions>(options =>
@@ -109,6 +132,8 @@ namespace VacationTracker
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
+            app.UseSession();
+
             app.UseRouting();
 
             app.UseAuthentication();
@@ -116,6 +141,10 @@ namespace VacationTracker
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapControllerRoute(
+                    name: "areas",
+                    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
@@ -128,6 +157,9 @@ namespace VacationTracker
                 var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
                 roleSeed.SeedAsync(roleManager).Wait();
                 roleSeed.SeedSystemAdminAsync(services).Wait();
+
+                var systemAdminSeedService = services.GetRequiredService<ISystemAdminSeedService>();
+                systemAdminSeedService.SeedSystemAdminAsync().Wait();
             }
             catch (Exception e)
             {

@@ -1,0 +1,51 @@
+@using VacationTracker.SystemAdmin.Models
+@model IEnumerable<Company>
+
+@{
+    ViewData["Title"] = "Companies";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Companies</h2>
+    <a asp-area="SystemAdmin" asp-controller="Admin" asp-action="CreateCompany" 
+       class="btn btn-primary">Add New Company</a>
+</div>
+
+@if (Model.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Company Name</th>
+                <th>Admin Email</th>
+                <th>Created Date</th>
+                <th>Last Accessed</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var company in Model)
+            {
+                <tr>
+                    <td>@company.CompanyName</td>
+                    <td>@company.AdminEmail</td>
+                    <td>@company.CreatedDate.ToShortDateString()</td>
+                    <td>@(company.LastAccessed?.ToShortDateString() ?? "Never")</td>
+                    <td>
+                        <a asp-area="SystemAdmin" asp-controller="Admin" asp-action="LoginAsCompany" asp-route-companyId="@company.Id"
+                           class="btn btn-success btn-sm">Login as System Admin</a>
+                        <a asp-area="SystemAdmin" asp-controller="Admin" asp-action="EditCompany" asp-route-id="@company.Id"
+                           class="btn btn-secondary btn-sm">Edit</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="text-center">
+        <h4 class="text-muted">No companies found</h4>
+        <p>Click "Add New Company" to create your first company.</p>
+    </div>
+} 

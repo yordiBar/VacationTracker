@@ -37,7 +37,13 @@
                         }
                         @if (User.Identity.IsAuthenticated)
                         {
-                            if (User.IsInRole("Manager") || User.IsInRole("SystemAdmin"))
+                            if (User.IsInRole("SystemAdmin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="SystemAdmin" asp-controller="Admin" asp-action="Index">System Admin</a>
+                                </li>
+                            }
+                            else if (User.IsInRole("Manager") || User.IsInRole("Admin"))
                             {
                                 <li class="nav-item nav-link text-dark">Company Settings
                                     <ul>
