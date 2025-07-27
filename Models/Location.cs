@@ -13,8 +13,5 @@ namespace VacationTracker.Models
         public string LocationCode { get; set; }
         public string LocationName { get; set; }
         public bool IsDeleted { get; set; }
-        
-        // Navigation Properties
-        public virtual Company Company { get; set; }
     }
 }
