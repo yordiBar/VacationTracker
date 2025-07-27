@@ -4,11 +4,9 @@ using Serilog;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Interfaces;
 using VacationTracker.Models;
 using VacationTracker.Models.DTO;
-using VacationTracker.SystemAdmin.Services.Interfaces;
 
 namespace VacationTracker.Controllers
 {
@@ -19,17 +17,13 @@ namespace VacationTracker.Controllers
         private readonly IGenderRepository _genderRepository;
         private readonly ICompanyService _companyService;
         private readonly ILogger _logger = Log.ForContext<GenderController>();
-        private readonly ICompanyRepository _companyRepository;
-        private readonly ICompanySelectionService _companySelectionService;
         #endregion
 
         #region Constructors
-        public GenderController(IGenderRepository genderRepository, ICompanyService companyService, ICompanyRepository companyRepository, ICompanySelectionService companySelectionService)
+        public GenderController(IGenderRepository genderRepository, ICompanyService companyService)
         {
             _genderRepository = genderRepository;
             _companyService = companyService;
-            _companyRepository = companyRepository;
-            _companySelectionService = companySelectionService;
         }
         #endregion
 
