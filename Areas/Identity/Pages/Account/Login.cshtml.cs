@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using VacationTracker.Areas.Identity.Data;
+using VacationTracker.SystemAdmin.Services.Interfaces;
 
 namespace VacationTracker.Areas.Identity.Pages.Account
 {
@@ -21,14 +22,17 @@ namespace VacationTracker.Areas.Identity.Pages.Account
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly ICompanySelectionService _companySelectionService;
 
         public LoginModel(SignInManager<ApplicationUser> signInManager, 
             ILogger<LoginModel> logger,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            ICompanySelectionService companySelectionService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
+            _companySelectionService = companySelectionService;
         }
 
         [BindProperty]
@@ -101,6 +105,13 @@ namespace VacationTracker.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in: {Email}", Input.Email);
+
+                    // Set the current company in session for multi-tenant support
+                    if (!user.IsSystemAdmin && user.CompanyId > 0)
+                    {
+                        await _companySelectionService.SetCurrentCompanyAsync(user.CompanyId);
+                        _logger.LogInformation("Set current company for user: {Email}, CompanyId: {CompanyId}", Input.Email, user.CompanyId);
+                    }
 
                     if (user.IsSystemAdmin)
                     {

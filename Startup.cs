@@ -118,7 +118,39 @@ namespace VacationTracker
                 return new DepartmentRepository(defaultDbContext);
             });
             
-            services.AddScoped<IGenderRepository, GenderRepository>();
+            services.AddScoped<IGenderRepository>(provider =>
+            {
+                var companyService = provider.GetService<ICompanyService>();
+                if (companyService == null)
+                {
+                    var dbContext = provider.GetService<ApplicationDbContext>();
+                    return new GenderRepository(dbContext);
+                }
+
+                var companyId = companyService.GetCurrentUserCompanyId();
+
+                // Use company-specific context if we have a valid company ID (not -1 for system admin)
+                if (companyId > 0)
+                {
+                    var dbContextFactory = provider.GetService<ICompanyDbContextFactory>();
+                    if (dbContextFactory != null)
+                    {
+                        try
+                        {
+                            var dbContext = dbContextFactory.CreateDbContext(companyId);
+                            return new GenderRepository(dbContext);
+                        }
+                        catch
+                        {
+                            var dbContext = provider.GetService<ApplicationDbContext>();
+                            return new GenderRepository(dbContext);
+                        }
+                    }
+                }
+
+                var defaultDbContext = provider.GetService<ApplicationDbContext>();
+                return new GenderRepository(defaultDbContext);
+            });
             services.AddScoped<IAllowanceRepository, AllowanceRepository>();
             services.AddScoped<ICompanyRepository, CompanyRepository>();            
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();

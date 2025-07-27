@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace VacationTracker.Models
+﻿namespace VacationTracker.Models
 {
     public class Gender
     {
@@ -12,6 +7,5 @@ namespace VacationTracker.Models
         public int CompanyId { get; set; }
         public string Name { get; set; }
         public bool IsDeleted { get; set; }
-        public virtual Company Company { get; set; }
     }
 }

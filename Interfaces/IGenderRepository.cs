@@ -7,7 +7,7 @@ namespace VacationTracker.Interfaces
     public interface IGenderRepository
     {
         Task<IEnumerable<Gender>> GetGendersByCompanyIdAsync(int companyId);
-        Task<Gender> GetGenderByIdAndCompanyIdAsync(int id, int companyId);
+        Task<Gender> GetGenderByIdAndCompanyIdAsync(int id, Company company);
         Task<Gender> AddGenderAsync(Gender gender);
         Task UpdateGenderAsync(Gender gender);
         Task DeleteGenderAsync(Gender gender);

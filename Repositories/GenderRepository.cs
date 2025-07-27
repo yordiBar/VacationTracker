@@ -24,31 +24,27 @@ namespace VacationTracker.Repositories
             if (companyId == -1)
             {
                 return await _db.Genders
-                    .Include(g => g.Company)
                     .Where(x => !x.IsDeleted)
                     .ToListAsync();
             }
             
             return await _db.Genders
-                .Include(g => g.Company)
                 .Where(x => x.CompanyId == companyId && !x.IsDeleted)
                 .ToListAsync();
         }
 
         // Details and Edit page
-        public async Task<Gender> GetGenderByIdAndCompanyIdAsync(int id, int companyId)
+        public async Task<Gender> GetGenderByIdAndCompanyIdAsync(int id, Company company)
         {
             // System admin (CompanyId = -1) can access all genders
-            if (companyId == -1)
+            if (company.Id == -1)
             {
                 return await _db.Genders
-                    .Include(g => g.Company)
                     .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
             }
             
             return await _db.Genders
-                .Include(g => g.Company)
-                .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == companyId && !x.IsDeleted);
+                .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == company.Id && !x.IsDeleted);
         }
 
         public async Task<Gender> AddGenderAsync(Gender gender)

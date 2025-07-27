@@ -2,10 +2,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Interfaces;
 using VacationTracker.Models;
+using VacationTracker.Models.DTO;
+using VacationTracker.SystemAdmin.Services.Interfaces;
 
 namespace VacationTracker.Controllers
 {
@@ -14,13 +17,19 @@ namespace VacationTracker.Controllers
     {
         #region Fields
         private readonly IGenderRepository _genderRepository;
+        private readonly ICompanyService _companyService;
         private readonly ILogger _logger = Log.ForContext<GenderController>();
+        private readonly ICompanyRepository _companyRepository;
+        private readonly ICompanySelectionService _companySelectionService;
         #endregion
 
         #region Constructors
-        public GenderController(IGenderRepository genderRepository)
+        public GenderController(IGenderRepository genderRepository, ICompanyService companyService, ICompanyRepository companyRepository, ICompanySelectionService companySelectionService)
         {
             _genderRepository = genderRepository;
+            _companyService = companyService;
+            _companyRepository = companyRepository;
+            _companySelectionService = companySelectionService;
         }
         #endregion
 
@@ -28,9 +37,21 @@ namespace VacationTracker.Controllers
 
         public async Task<IActionResult> Index()
         {
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+            if (currentUsersCompanyId == 0 && !_companyService.IsSystemAdmin())
+            {
+                _logger.Error("User does not have a valid company ID");
+                return Unauthorized("You do not have access to any company data.");
+            }
+
             IEnumerable<Gender> genderList = await _genderRepository.GetGendersByCompanyIdAsync(currentUsersCompanyId);
-            return View(genderList);
+            var genderDTO = genderList.Select(gender => new GenderDetailsDTO
+            {
+                Id = gender.Id,
+                GenderName = gender.Name,
+                CompanyId = gender.CompanyId
+            });
+            return View(genderDTO);
         }
 
         public async Task<IActionResult> Details(int? id)
@@ -41,16 +62,25 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
-            Gender gender = await _genderRepository.GetGenderByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+            var companyForRepo = new Company { Id = currentUsersCompanyId };
+            Gender gender = await _genderRepository.GetGenderByIdAndCompanyIdAsync(id.Value, companyForRepo);
 
             if (gender == null)
             {
                 _logger.Error("Gender not found with ID {GenderId}", id);
                 return NotFound();
             }
-            return View(gender);
+
+            var genderDto = new GenderDetailsDTO
+            {
+                Id = gender.Id,
+                GenderName = gender.Name,
+                CompanyId = gender.CompanyId
+            };
+
+            return View(genderDto);
         }
 
         [HttpGet]
@@ -70,7 +100,7 @@ namespace VacationTracker.Controllers
                 return View(gender);
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
             gender.CompanyId = currentUsersCompanyId;
 
@@ -89,9 +119,10 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
-            Gender gender = await _genderRepository.GetGenderByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+            var companyForRepo = new Company { Id = currentUsersCompanyId };
+            Gender gender = await _genderRepository.GetGenderByIdAndCompanyIdAsync(id.Value, companyForRepo);
 
             if (gender == null)
             {
@@ -112,6 +143,9 @@ namespace VacationTracker.Controllers
                 return View(gender);
             }
 
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+            gender.CompanyId = currentUsersCompanyId;
+
             await _genderRepository.UpdateGenderAsync(gender);
             _logger.Information("Gender updated with ID {GenderId}", gender.Id);
 
@@ -127,9 +161,10 @@ namespace VacationTracker.Controllers
                 return NotFound();
             }
 
-            int currentUsersCompanyId = User.Identity.GetCompanyId();
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
-            Gender gender = await _genderRepository.GetGenderByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+            var companyForRepo = new Company { Id = currentUsersCompanyId };
+            Gender gender = await _genderRepository.GetGenderByIdAndCompanyIdAsync(id.Value, companyForRepo);
 
             if (gender == null)
             {
@@ -149,6 +184,9 @@ namespace VacationTracker.Controllers
                 _logger.Error("Invalid model state while deleting gender with ID {GenderId}", gender.Id);
                 return View(gender);
             }
+
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+            gender.CompanyId = currentUsersCompanyId;
 
             await _genderRepository.DeleteGenderAsync(gender);
             _logger.Information("Gender deleted with ID {GenderId}", gender.Id);
