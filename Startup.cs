@@ -94,8 +94,9 @@ namespace VacationTracker
                 }
 
                 var companyId = companyService.GetCurrentUserCompanyId();
-                
-                if (companyService.IsSystemAdmin() && companyId != -1)
+
+                // Use company-specific context if we have a valid company ID (not -1 for system admin)
+                if (companyId > 0)
                 {
                     var dbContextFactory = provider.GetService<ICompanyDbContextFactory>();
                     if (dbContextFactory != null)
@@ -112,8 +113,7 @@ namespace VacationTracker
                         }
                     }
                 }
-                
-                // Regular user or SystemAdmin in main area - use default database
+
                 var defaultDbContext = provider.GetService<ApplicationDbContext>();
                 return new DepartmentRepository(defaultDbContext);
             });

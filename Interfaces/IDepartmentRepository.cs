@@ -7,7 +7,7 @@ namespace VacationTracker.Interfaces
     public interface IDepartmentRepository
     {
         Task<IEnumerable<Department>> GetDepartmentsByCompanyIdAsync(int companyId);
-        Task<Department> GetDepartmentByIdAndCompanyIdAsync(int id, int companyId);
+        Task<Department> GetDepartmentByIdAndCompanyIdAsync(int id, Company company);
         Task<Department> AddDepartmentAsync(Department department);
         Task UpdateDepartmentAsync(Department department);
         Task DeleteDepartmentAsync(Department department);

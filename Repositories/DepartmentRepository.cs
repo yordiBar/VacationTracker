@@ -32,19 +32,17 @@ namespace VacationTracker.Repositories
         }
 
         // Details page
-        public async Task<Department> GetDepartmentByIdAndCompanyIdAsync(int id, int companyId)
+        public async Task<Department> GetDepartmentByIdAndCompanyIdAsync(int id, Company company)
         {
             // System admin (CompanyId = -1) can access all departments
-            if (companyId == -1)
+            if (company.Id == -1)
             {
                 return await _db.Departments
-                    .Include(x => x.Company)
                     .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
             }
 
             return await _db.Departments
-                .Include(x => x.Company)
-                .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == companyId && !x.IsDeleted);
+                .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == company.Id && !x.IsDeleted);
         }
 
         // Index page
@@ -54,13 +52,11 @@ namespace VacationTracker.Repositories
             if (companyId == -1)
             {
                 return await _db.Departments
-                    .Include(d => d.Company)
                     .Where(x => !x.IsDeleted)
                     .ToListAsync();
             }
 
             return await _db.Departments
-                .Include(d => d.Company)
                 .Where(x => x.CompanyId == companyId && !x.IsDeleted)
                 .ToListAsync();
         }

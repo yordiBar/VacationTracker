@@ -4,11 +4,9 @@ using Serilog;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using VacationTracker.Areas.Identity.Extensions;
 using VacationTracker.Interfaces;
 using VacationTracker.Models;
 using VacationTracker.Models.DTO;
-using VacationTracker.Services;
 
 namespace VacationTracker.Controllers
 {
@@ -40,13 +38,13 @@ namespace VacationTracker.Controllers
                 _logger.Error("User does not have a valid company ID");
                 return Unauthorized("You do not have access to any company data.");
             }
+
             IEnumerable<Department> departmentList = await _departmentRepository.GetDepartmentsByCompanyIdAsync(currentUsersCompanyId);
 
             var departmentDTO = departmentList.Select(department => new DepartmentDetailsDTO
             {
                 Id = department.Id,
                 DepartmentName = department.DepartmentName,
-                CompanyName = department.Company?.CompanyName ?? "Unknown Company",
                 CompanyId = department.CompanyId
             }).ToList();
 
@@ -64,7 +62,8 @@ namespace VacationTracker.Controllers
 
             int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
-            Department department = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+            var companyForRepo = new Company { Id = currentUsersCompanyId };
+            Department department = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(id.Value, companyForRepo);
 
             if (department == null)
             {
@@ -76,7 +75,6 @@ namespace VacationTracker.Controllers
             {
                 Id = department.Id,
                 DepartmentName = department.DepartmentName,
-                CompanyName = department.Company?.CompanyName ?? "Unknown Company",
                 CompanyId = department.CompanyId
             };
             return View(departmentDTO);
@@ -112,6 +110,7 @@ namespace VacationTracker.Controllers
         }
 
         // GET: Department/Edit
+        [HttpGet]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -122,7 +121,9 @@ namespace VacationTracker.Controllers
 
             int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
-            Department department = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+            var companyForRepo = new Company { Id = currentUsersCompanyId };
+
+            Department department = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(id.Value, companyForRepo);
 
             if (department == null)
             {
@@ -143,6 +144,9 @@ namespace VacationTracker.Controllers
                 return View(department);
             }
 
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+            department.CompanyId = currentUsersCompanyId;
+
             await _departmentRepository.UpdateDepartmentAsync(department);
             _logger.Information("Department updated with ID {DepartmentId}", department.Id);
 
@@ -150,6 +154,7 @@ namespace VacationTracker.Controllers
         }
 
         // GET: Department/Delete
+        [HttpGet]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -160,7 +165,8 @@ namespace VacationTracker.Controllers
 
             int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
-            Department department = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+            var companyForRepo = new Company { Id = currentUsersCompanyId };
+            Department department = await _departmentRepository.GetDepartmentByIdAndCompanyIdAsync(id.Value, companyForRepo);
 
             if (department == null)
             {
@@ -180,6 +186,9 @@ namespace VacationTracker.Controllers
                 _logger.Error("Invalid model state while deleting department with ID {DepartmentId}", department.Id);
                 return View(department);
             }
+
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+            department.CompanyId = currentUsersCompanyId;
 
             await _departmentRepository.DeleteDepartmentAsync(department);
             _logger.Information("Department deleted with ID {DepartmentId}", department.Id);
