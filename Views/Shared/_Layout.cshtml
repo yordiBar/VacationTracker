@@ -30,12 +30,12 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
-                        @if (SignInManager.IsSignedIn(User))
+@*                         @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="MyRequests">My Requests</a>
                             </li>
-                        }
+                        } *@
                         @if (User.Identity.IsAuthenticated)
                         {
                             if (User.IsInRole("SystemAdmin"))
@@ -44,7 +44,7 @@
                                 {
                                     // SystemAdmin is logged into a specific company - show company navigation
                                     <li class="nav-item">
-                                        <a class="nav-link text-warning" asp-area="SystemAdmin" asp-controller="Admin" asp-action="ExitCompanyMode">Exit Company Mode</a>
+                                        <a class="nav-link text-warning" asp-area="SystemAdmin" asp-controller="Admin" asp-action="ExitCompanyMode">Exit Company</a>
                                     </li>
                                     <li class="nav-item nav-link text-dark">Company Settings
                                         <ul>
@@ -73,7 +73,7 @@
                                 {
                                     // SystemAdmin is in the main SystemAdmin area - show only System Admin link
                                     <li class="nav-item">
-                                        <a class="nav-link text-dark" asp-area="SystemAdmin" asp-controller="Admin" asp-action="Index">System Admin</a>
+                                        <a class="nav-link text-dark" asp-area="SystemAdmin" asp-controller="Admin" asp-action="Index">List of Companies</a>
                                     </li>
                                 }
                             }
