@@ -26,51 +26,35 @@ namespace VacationTracker.Controllers
             _locationRepository = locationRepository;
             _companyService = companyService;
         }
-
-
         #endregion
 
         #region Actions
-
-        [HttpGet]
-        public IActionResult Test()
-        {
-            return Content("LocationController.Test() reached successfully! Dependencies: " + 
-                          (_locationRepository != null ? "Repository OK" : "Repository NULL") + ", " +
-                          (_companyService != null ? "Service OK" : "Service NULL"));
-        }
-
         public async Task<IActionResult> Index()
         {
             try
             {
                 int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
-                
-                _logger.Information("Current user company ID: {CompanyId}", currentUsersCompanyId);
-                
                 if (currentUsersCompanyId == 0 && !_companyService.IsSystemAdmin())
                 {
                     _logger.Error("User does not have a valid company ID");
                     return Unauthorized("You do not have access to any company data.");
                 }
 
-                _logger.Information("Fetching locations for company ID: {CompanyId}", currentUsersCompanyId);
                 IEnumerable<Location> locationList = await _locationRepository.GetLocationsByCompanyIdAsync(currentUsersCompanyId);
-            
-                            var locationDTOs = locationList.Select(location => new LocationDetailsDTO
+
+                var locationDTOs = locationList.Select(location => new LocationDetailsDTO
                 {
                     Id = location.Id,
                     LocationName = location.LocationName,
-                    CompanyName = location.Company?.CompanyName ?? "Unknown Company",
                     CompanyId = location.CompanyId
                 }).ToList();
-                
+
                 _logger.Information("Returning {Count} locations", locationDTOs.Count);
                 return View(locationDTOs);
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error in LocationController.Index for company ID: {CompanyId}", 
+                _logger.Error(ex, "Error in LocationController.Index for company ID: {CompanyId}",
                     _companyService.GetCurrentUserCompanyId());
                 throw;
             }
@@ -87,7 +71,9 @@ namespace VacationTracker.Controllers
 
             int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
-            Location location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+            var companyForRepo = new Company { Id = currentUsersCompanyId };
+
+            Location location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(id.Value, companyForRepo);
 
             if (location == null)
             {
@@ -99,7 +85,6 @@ namespace VacationTracker.Controllers
             {
                 Id = location.Id,
                 LocationName = location.LocationName,
-                CompanyName = location.Company?.CompanyName ?? "Unknown Company",
                 CompanyId = location.CompanyId
             };
 
@@ -145,7 +130,9 @@ namespace VacationTracker.Controllers
 
             int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
-            Location location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+            var companyForRepo = new Company { Id = currentUsersCompanyId };
+
+            Location location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(id.Value, companyForRepo);
 
             if (location == null)
             {
@@ -166,12 +153,16 @@ namespace VacationTracker.Controllers
                 return View(loc);
             }
 
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+            loc.CompanyId = currentUsersCompanyId;
+
             await _locationRepository.UpdateLocationAsync(loc);
             _logger.Information("Location updated with ID {LocationId}", loc.Id);
 
             return RedirectToAction("Index");
         }
 
+        [HttpGet]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -182,7 +173,9 @@ namespace VacationTracker.Controllers
 
             int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
 
-            Location location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(id.Value, currentUsersCompanyId);
+            var companyForRepo = new Company { Id = currentUsersCompanyId };
+
+            Location location = await _locationRepository.GetLocationByIdAndCompanyIdAsync(id.Value, companyForRepo);
 
             if (location == null)
             {
@@ -202,6 +195,9 @@ namespace VacationTracker.Controllers
                 _logger.Error("Invalid model state while deleting location with ID {LocationId}", loc.Id);
                 return View(loc);
             }
+
+            int currentUsersCompanyId = _companyService.GetCurrentUserCompanyId();
+            loc.CompanyId = currentUsersCompanyId;
 
             await _locationRepository.DeleteLocationAsync(loc);
             _logger.Information("Location deleted with ID {LocationId}", loc.Id);

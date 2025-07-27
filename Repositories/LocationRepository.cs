@@ -24,31 +24,29 @@ namespace VacationTracker.Repositories
             if (companyId == -1)
             {
                 return await _db.Locations
-                    .Include(l => l.Company)
                     .Where(x => !x.IsDeleted)
                     .ToListAsync();
             }
             
             return await _db.Locations
-                .Include(l => l.Company)
                 .Where(x => x.CompanyId == companyId && !x.IsDeleted)
                 .ToListAsync();
         }
 
         // Details and Edit page
-        public async Task<Location> GetLocationByIdAndCompanyIdAsync(int id, int companyId)
+        public async Task<Location> GetLocationByIdAndCompanyIdAsync(int id, Company company)
         {
             // System admin (CompanyId = -1) can access all locations
-            if (companyId == -1)
+            if (company.Id == -1)
             {
                 return await _db.Locations
-                    .Include(l => l.Company)
+                    .Include(l => company)
                     .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
             }
             
             return await _db.Locations
-                .Include(l => l.Company)
-                .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == companyId && !x.IsDeleted);
+                .Include(l => company)
+                .FirstOrDefaultAsync(x => x.Id == id && x.CompanyId == company.Id && !x.IsDeleted);
         }
 
         public async Task<Location> AddLocationAsync(Location location)
